@@ -1,0 +1,3 @@
+Akl, Ahmad, and Shahrokh Valaee. "Accelerometer-based gesture recognition via dynamic-time warping, affinity propagation, & compressive sensing." 2010 IEEE International Conference on Acoustics, Speech and Signal Processing. IEEE, 2010.
+
+https://en.wikipedia.org/wiki/Dynamic_time_warping
