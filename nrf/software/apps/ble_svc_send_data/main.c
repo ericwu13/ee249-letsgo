@@ -89,9 +89,11 @@ int main(void) {
 
   simple_ble_add_service(&led_service);
 
-  // simple_ble_add_characteristic(1, 1, 0, 0,
-  //     sizeof(led_state), (uint8_t*)&led_state,
-  //     &led_service, &led_state_char);
+  /*
+  initialization of IMU & flexsensors
+  initialization of the communication to the IMU & flexsors.
+  */
+
   simple_ble_add_characteristic(1, 1, 0, 0,
        sizeof(char) * 10, (uint8_t*)text_state,
        &led_service, &led_state_char);
