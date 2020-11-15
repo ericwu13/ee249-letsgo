@@ -21,21 +21,20 @@ static simple_ble_config_t ble_config = {
         // c0:98:e5:49:xx:xx
         .platform_id       = 0x49,    // used as 4th octect in device BLE address
         .device_id         = 0x0000, // TODO: replace with your lab bench number
-        .adv_name          = "EE149 LED", // used in advertisements if there is room
+        .adv_name          = "Let's Go", // used in advertisements if there is room
         .adv_interval      = MSEC_TO_UNITS(1000, UNIT_0_625_MS),
         .min_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
         .max_conn_interval = MSEC_TO_UNITS(1000, UNIT_1_25_MS),
 };
 
 // 32e61089-2b22-4db5-a914-43ce41986c70
-static simple_ble_service_t led_service = {{
+static simple_ble_service_t letsgo_service = {{
     .uuid128 = {0x70,0x6C,0x98,0x41,0xCE,0x43,0x14,0xA9,
                 0xB5,0x4D,0x22,0x2B,0x89,0x10,0xE6,0x32}
 }};
 
-static simple_ble_char_t led_state_char = {.uuid16 = 0x108a};
-static bool led_state = true;
-static char text_state[10]; 
+static simple_ble_char_t letsgo_IMU_char = {.uuid16 = 0x108a};
+static float IMU_data[14]; 
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
@@ -43,9 +42,9 @@ static char text_state[10];
 simple_ble_app_t* simple_ble_app;
 
 void ble_evt_write(ble_evt_t const* p_ble_evt) {
-    if (simple_ble_is_char_event(p_ble_evt, &led_state_char)) {
-      printf("Got write to Displayer!\n");
-      display_write(text_state, DISPLAY_LINE_0);
+    if (simple_ble_is_char_event(p_ble_evt, &letsgo_IMU_char)) {
+      printf("Got write to Data!\n");
+      //display_write(text_state, DISPLAY_LINE_0);
       // printf("Got write to LED characteristic!\n");
       // if (led_state) {
       //   printf("Turning on LED!\n");
@@ -76,6 +75,7 @@ int main(void) {
   };
 
   ret_code_t error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
+  //printf("Check! %d\n", error_code);
   APP_ERROR_CHECK(error_code);
   display_init(&spi_instance);
   display_write("Hello, Human!", DISPLAY_LINE_0);
@@ -87,31 +87,27 @@ int main(void) {
   // Setup BLE
   simple_ble_app = simple_ble_init(&ble_config);
 
-  simple_ble_add_service(&led_service);
+  simple_ble_add_service(&letsgo_service);
 
   /*
   initialization of IMU & flexsensors
   initialization of the communication to the IMU & flexsors.
   */
 
-  simple_ble_add_characteristic(1, 1, 0, 0,
-       sizeof(char) * 10, (uint8_t*)text_state,
-       &led_service, &led_state_char);
+  simple_ble_add_characteristic(1, 1, 1, 0,
+       sizeof(float) * 14, (uint8_t*)IMU_data,
+       &letsgo_service, &letsgo_IMU_char);
 
   // Start Advertising
   simple_ble_adv_only_name();
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(10);
-    printf("in loop\n");
-    power_manage();
-    printf("after manager %d\n", counter);
-    if(counter++ == 10)
-    {
-      strcpy(text_state, "empty");
-      display_write(text_state, DISPLAY_LINE_0);
-    }
+    nrf_delay_ms(2000);
+    IMU_data[0] += 0.05;
+    error_code = simple_ble_notify_char(&letsgo_IMU_char);
+    APP_ERROR_CHECK(error_code);
+    printf("%f", IMU_data[0]);
   }
 }
 
