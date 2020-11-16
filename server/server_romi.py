@@ -17,6 +17,7 @@ def on_publish(client,userdata,result):             #create function for callbac
 def on_message(client, userdata, msg):  # The callback for when a PUBLISH message is received from the server.
     print("Message received-> " + msg.topic + " " + str(msg.payload))  # Print a received msg
     # send the message via BLE to romi
+    print("Forwarding the command to romi.....")
     client.ch.write(bytes(msg.payload))
 
 

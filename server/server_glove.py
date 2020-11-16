@@ -67,7 +67,7 @@ try:
     
     if SEND_COMMAND_DEBUG:
         while True:
-            command = input("Enter a message to write to the display:\n")
+            command = input("Enter a command character:\n")
             client1.publish("command_1", command)   
     else :
         print("connecting")
