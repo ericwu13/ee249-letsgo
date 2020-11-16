@@ -13,14 +13,14 @@
 float angle = 0;
 int16_t rightSpeed = 0;
 int16_t leftSpeed = 0;
-const int16_t delta = 100;
-char cmd;
+const int16_t delta = 50;
+
 KobukiSensors_t sensors = {0};
 robot_state_t controller (robot_state_t state)
 {
   // read sensors from robot
+  printf("cmd: %x, state: %d\n", cmd, state);
   kobukiSensorPoll(&sensors);
-
   // delay before continuing
   // Note: removing this delay will make responses quicker, but will result
   //  in printf's in this loop breaking JTAG
@@ -149,6 +149,7 @@ robot_state_t controller (robot_state_t state)
     }
     case TURN_RIGHT:
     {
+      printf("here\n");
       if (is_button_pressed(&sensors)) {
         state = OFF;
         lsm9ds1_stop_gyro_integration();
@@ -183,7 +184,6 @@ robot_state_t controller (robot_state_t state)
         kobukiDriveDirect(leftSpeed, rightSpeed);
         angle = lsm9ds1_read_gyro_integration().z_axis;
         state = TURN_RIGHT;
-
         char buf[16];
         snprintf(buf, 16, "%f", angle);
         display_write(buf, DISPLAY_LINE_1);

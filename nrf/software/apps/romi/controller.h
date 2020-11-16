@@ -11,5 +11,6 @@ typedef enum {
   FORWARD
 } robot_state_t;
 
+char cmd;
 
 robot_state_t controller(robot_state_t state);

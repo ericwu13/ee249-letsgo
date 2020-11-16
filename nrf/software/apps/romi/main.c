@@ -54,7 +54,7 @@ static simple_ble_service_t letsgo_service = {{
 }};
 
 static simple_ble_char_t letsgo_IMU_char = {.uuid16 = 0x108a};
-static float IMU_data[3]; 
+static char command; 
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
@@ -63,7 +63,15 @@ simple_ble_app_t* simple_ble_app;
 
 void ble_evt_write(ble_evt_t const* p_ble_evt) {
     if (simple_ble_is_char_event(p_ble_evt, &letsgo_IMU_char)) {
-      printf("Got write to Data!\n");
+      if(command != 'H' && command != 'L' && command != 'F' && command != 'B' && command != 'R')
+      {
+        printf("Unknown command: %x\n", command);
+      }
+      else 
+      {
+        cmd = command;       
+      }
+
       //display_write(text_state, DISPLAY_LINE_0);
       // printf("Got write to LED characteristic!\n");
       // if (led_state) {
@@ -75,19 +83,10 @@ void ble_evt_write(ble_evt_t const* p_ble_evt) {
       // }
     }
 }
-
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
 
   // Initialize
-  nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
-  i2c_config.scl = BUCKLER_SENSORS_SCL;
-  i2c_config.sda = BUCKLER_SENSORS_SDA;
-  i2c_config.frequency = NRF_TWIM_FREQ_100K;
-  ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
-  APP_ERROR_CHECK(error_code);
-  lsm9ds1_init(&twi_mngr_instance);
-  printf("IMU initialized!\n");
   // initialize display
   nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
   nrf_drv_spi_config_t spi_config = {
@@ -102,12 +101,21 @@ int main(void) {
     .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
   };
 
-  error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
+  ret_code_t error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
   //printf("Check! %d\n", error_code);
   APP_ERROR_CHECK(error_code);
   display_init(&spi_instance);
   display_write("Hello, Human!", DISPLAY_LINE_0);
   printf("Display initialized!\n");
+
+  nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
+  i2c_config.scl = BUCKLER_SENSORS_SCL;
+  i2c_config.sda = BUCKLER_SENSORS_SDA;
+  i2c_config.frequency = NRF_TWIM_FREQ_100K;
+  error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
+  APP_ERROR_CHECK(error_code);
+  lsm9ds1_init(&twi_mngr_instance);
+  printf("IMU initialized!\n");
 
   // Setup LED GPIO
   nrf_gpio_cfg_output(BUCKLER_LED0);
@@ -123,7 +131,7 @@ int main(void) {
   */
 
   simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 3, (uint8_t*)IMU_data,
+       sizeof(char), (uint8_t*)&command,
        &letsgo_service, &letsgo_IMU_char);
 
   // Start Advertising
@@ -135,17 +143,7 @@ int main(void) {
   robot_state_t state = OFF;
   int counter = 0;
   while(1) {
-    nrf_delay_ms(10);
-	lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
-	float Ay = accel_val.y_axis;
-	float Az = accel_val.z_axis;
-	float Ax = accel_val.x_axis;
-    IMU_data[0] = Ay;
-    IMU_data[1] = Az;
-    IMU_data[2] = Ax;
-    error_code = simple_ble_notify_char(&letsgo_IMU_char);
-    APP_ERROR_CHECK(error_code);
-    printf("%f, %f, %f\n", IMU_data[0], IMU_data[1], IMU_data[2]);
+    nrf_delay_ms(1);
     state = controller(state);
   }
 }
