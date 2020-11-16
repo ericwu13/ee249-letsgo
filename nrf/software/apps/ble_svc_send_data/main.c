@@ -13,9 +13,26 @@
 
 #include "simple_ble.h"
 #include "buckler.h"
+#include "lsm9ds1.h"
 
 #include "max44009.h"
 
+#include "nrf.h"
+#include "nrf_delay.h"
+#include "nrf_gpio.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+#include "nrf_pwr_mgmt.h"
+#include "nrf_drv_spi.h"
+
+#include "buckler.h"
+#include "display.h"
+#include "kobukiActuator.h"
+#include "kobukiSensorPoll.h"
+#include "kobukiSensorTypes.h"
+#include "kobukiUtilities.h"
+#include "lsm9ds1.h"
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
         // c0:98:e5:49:xx:xx
@@ -34,7 +51,7 @@ static simple_ble_service_t letsgo_service = {{
 }};
 
 static simple_ble_char_t letsgo_IMU_char = {.uuid16 = 0x108a};
-static float IMU_data[14]; 
+static float IMU_data[3]; 
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
@@ -56,10 +73,18 @@ void ble_evt_write(ble_evt_t const* p_ble_evt) {
     }
 }
 
+NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
 
   // Initialize
-
+  nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
+  i2c_config.scl = BUCKLER_SENSORS_SCL;
+  i2c_config.sda = BUCKLER_SENSORS_SDA;
+  i2c_config.frequency = NRF_TWIM_FREQ_100K;
+  ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
+  APP_ERROR_CHECK(error_code);
+  lsm9ds1_init(&twi_mngr_instance);
+  printf("IMU initialized!\n");
   // initialize display
   nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
   nrf_drv_spi_config_t spi_config = {
@@ -74,7 +99,7 @@ int main(void) {
     .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
   };
 
-  ret_code_t error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
+  error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
   //printf("Check! %d\n", error_code);
   APP_ERROR_CHECK(error_code);
   display_init(&spi_instance);
@@ -95,7 +120,7 @@ int main(void) {
   */
 
   simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 14, (uint8_t*)IMU_data,
+       sizeof(float) * 3, (uint8_t*)IMU_data,
        &letsgo_service, &letsgo_IMU_char);
 
   // Start Advertising
@@ -103,11 +128,17 @@ int main(void) {
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(2000);
-    IMU_data[0] += 0.05;
+    nrf_delay_ms(1000);
+	lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
+	float Ay = accel_val.y_axis;
+	float Az = accel_val.z_axis;
+	float Ax = accel_val.x_axis;
+    IMU_data[0] = Ay;
+    IMU_data[1] = Az;
+    IMU_data[2] = Ax;
     error_code = simple_ble_notify_char(&letsgo_IMU_char);
     APP_ERROR_CHECK(error_code);
-    printf("%f", IMU_data[0]);
+    printf("%f, %f, %f\n", IMU_data[0], IMU_data[1], IMU_data[2]);
   }
 }
 

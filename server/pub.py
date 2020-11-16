@@ -12,6 +12,7 @@ client1= paho.Client("control1")                           #create client object
 client1.on_publish = on_publish                          #assign function to callback
 client1.connect(broker,port)                                 #establish connection
 
+a = bytes([0x00, 0x05, 0x10])
 while True:
-    ret = client1.publish("command_1","forward")                   #publish
+    ret = client1.publish("command_1",a)                   #publish
     time.sleep(1)
