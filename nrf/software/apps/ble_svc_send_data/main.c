@@ -16,6 +16,9 @@
 #include "lsm9ds1.h"
 
 #include "max44009.h"
+#include "controller.h"
+#include "lsm9ds1.h"
+#include "kobukiUtilities.h"
 
 #include "nrf.h"
 #include "nrf_delay.h"
@@ -125,10 +128,14 @@ int main(void) {
 
   // Start Advertising
   simple_ble_adv_only_name();
+  
 
+  kobukiInit();
+  printf("Kobuki initialized!\n");
+  robot_state_t state = OFF;
   int counter = 0;
   while(1) {
-    nrf_delay_ms(1000);
+    nrf_delay_ms(10);
 	lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
 	float Ay = accel_val.y_axis;
 	float Az = accel_val.z_axis;
@@ -139,6 +146,7 @@ int main(void) {
     error_code = simple_ble_notify_char(&letsgo_IMU_char);
     APP_ERROR_CHECK(error_code);
     printf("%f, %f, %f\n", IMU_data[0], IMU_data[1], IMU_data[2]);
+    state = controller(state);
   }
 }
 
