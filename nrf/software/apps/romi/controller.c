@@ -162,6 +162,7 @@ robot_state_t controller (robot_state_t state)
         angle = 0;
         leftSpeed = 0;
         rightSpeed = 0;
+        cmd = 'H';
       }
       else if (cmd == 'F') {
         state = FORWARD;
@@ -204,6 +205,7 @@ robot_state_t controller (robot_state_t state)
         angle = 0;
         leftSpeed = 0;
         rightSpeed = 0;
+        cmd = 'H';
       }
       else if (cmd == 'F') {
         state = FORWARD;
