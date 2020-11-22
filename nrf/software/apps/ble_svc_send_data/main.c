@@ -33,6 +33,8 @@
 #include "kobukiSensorTypes.h"
 #include "kobukiUtilities.h"
 #include "lsm9ds1.h"
+
+#define NUM_IMU_DATA 14
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
         // c0:98:e5:49:xx:xx
@@ -50,8 +52,12 @@ static simple_ble_service_t letsgo_service = {{
                 0xB5,0x4D,0x22,0x2B,0x89,0x10,0xE6,0x32}
 }};
 
-static simple_ble_char_t letsgo_IMU_char = {.uuid16 = 0x108a};
-static float IMU_data[3]; 
+static simple_ble_char_t letsgo_accel_char = {.uuid16 = 0x108a};
+static simple_ble_char_t letsgo_gyro_char = {.uuid16 = 0x108b};
+static simple_ble_char_t letsgo_magnet_char = {.uuid16 = 0x108c};
+static simple_ble_char_t letsgo_flex_char = {.uuid16 = 0x108d};
+static float IMU_data[NUM_IMU_DATA];
+
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
@@ -59,18 +65,43 @@ static float IMU_data[3];
 simple_ble_app_t* simple_ble_app;
 
 void ble_evt_write(ble_evt_t const* p_ble_evt) {
-    if (simple_ble_is_char_event(p_ble_evt, &letsgo_IMU_char)) {
-      printf("Got write to Data!\n");
-      //display_write(text_state, DISPLAY_LINE_0);
-      // printf("Got write to LED characteristic!\n");
-      // if (led_state) {
-      //   printf("Turning on LED!\n");
-      //   nrf_gpio_pin_clear(BUCKLER_LED0);
-      // } else {
-      //   printf("Turning off LED!\n");
-      //   nrf_gpio_pin_set(BUCKLER_LED0);
-      // }
+    if (simple_ble_is_char_event(p_ble_evt, &letsgo_accel_char)) {
+      printf("Got write to Accel!\n");
     }
+    if (simple_ble_is_char_event(p_ble_evt, &letsgo_gyro_char)) {
+      printf("Got write to Gyro!\n");
+    }
+    if (simple_ble_is_char_event(p_ble_evt, &letsgo_magnet_char)) {
+      printf("Got write to Magnet!\n");
+    }
+    if (simple_ble_is_char_event(p_ble_evt, &letsgo_flex_char)) {
+      printf("Got write to Flex!\n");
+    }
+}
+
+void read_IMU(float* data, int length)
+{
+    lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
+    lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
+    lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
+    data[0] = accel_val.x_axis;
+    data[1] = accel_val.y_axis;
+    data[2] = accel_val.z_axis;
+    data[3] = gyro_val.x_axis;
+    data[4] = gyro_val.y_axis;
+    data[5] = gyro_val.z_axis;
+    data[6] = magnet_val.x_axis;
+    data[7] = magnet_val.y_axis;
+    data[8] = magnet_val.z_axis;
+    // TODO: read flex sensor
+    return;
+}
+void print_IMU(float* data, int length)
+{
+  printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
+  printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
+  printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
+  printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
 }
 
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
@@ -120,25 +151,33 @@ int main(void) {
   */
 
   simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 3, (uint8_t*)IMU_data,
-       &letsgo_service, &letsgo_IMU_char);
+       sizeof(float) * 3, (uint8_t*)&(IMU_data[0]),
+       &letsgo_service, &letsgo_accel_char);
 
+  simple_ble_add_characteristic(1, 1, 1, 0,
+       sizeof(float) * 3, (uint8_t*)&(IMU_data[3]),
+       &letsgo_service, &letsgo_gyro_char);
+
+  simple_ble_add_characteristic(1, 1, 1, 0,
+       sizeof(float) * 3, (uint8_t*)&(IMU_data[6]),
+       &letsgo_service, &letsgo_magnet_char);
+  simple_ble_add_characteristic(1, 1, 1, 0,
+       sizeof(float) * 5, (uint8_t*)&(IMU_data[9]),
+       &letsgo_service, &letsgo_flex_char);
   // Start Advertising
   simple_ble_adv_only_name();
 
   int counter = 0;
   while(1) {
     nrf_delay_ms(1000);
-	lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
-	float Ay = accel_val.y_axis;
-	float Az = accel_val.z_axis;
-	float Ax = accel_val.x_axis;
-    IMU_data[0] = Ay;
-    IMU_data[1] = Az;
-    IMU_data[2] = Ax;
-    error_code = simple_ble_notify_char(&letsgo_IMU_char);
+    read_IMU(IMU_data, NUM_IMU_DATA);
+    IMU_data[9] = (float)(counter++);
+    error_code = simple_ble_notify_char(&letsgo_accel_char);
+    error_code = simple_ble_notify_char(&letsgo_gyro_char);
+    error_code = simple_ble_notify_char(&letsgo_magnet_char);
+    error_code = simple_ble_notify_char(&letsgo_flex_char);
     APP_ERROR_CHECK(error_code);
-    printf("%f, %f, %f\n", IMU_data[0], IMU_data[1], IMU_data[2]);
+    print_IMU(IMU_data, NUM_IMU_DATA);
   }
 }
 

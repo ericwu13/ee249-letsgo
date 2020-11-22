@@ -15,30 +15,32 @@ class IMUData():
         self.data = [0]*3
     def unpack(self, data): 
         for i in range(3):
-            print(data[(4*i):(4*i)+4])
+            #print(data[(4*i):(4*i)+4])
             self.data[i] = struct.unpack('f', data[(4*i):(4*i)+4])[0]
-        print(self.data)
+        print(self.data, flush = True)
 
 class LetsGoDelegate(DefaultDelegate):
     def __init__(self, params):
         DefaultDelegate.__init__(self)
         # ... initialise here
         self.LetsGo_cHandle = params
+        self.ch_pair = {}
 
     def handleNotification(self, cHandle, data):
-        #print("Notification!")
+        print("Notification! %d %d", cHandle)
         #check cHandle
-        if(cHandle == self.LetsGo_cHandle):
+        if cHandle in self.ch_pair:
+            print(self.ch_pair[cHandle])
             imu_data.unpack(data)
-        ret = self.client.publish("command_1",data) 
+        #ret = self.client.publish("command_1",data) 
         # ... process 'data'
 
-
-
-    def setLetsGoCHandle(self, cHandle, imu_data, client):
-        self.LetsGo_cHandle = cHandle
+    def setLetsGo(self, imu_data, client):
         self.imu_data = imu_data
         self.client = client
+
+    def addPairCHandle(self, ch_pair):
+        self.ch_pair[ch_pair[0]] = ch_pair[1]
 
 def on_publish(client,userdata,result):             #create function for callback
     print("data published \n")
@@ -56,10 +58,14 @@ broker = "54.90.30.207"
 port = 1883
 
 
-DISPLAY_SERVICE_UUID = "32e61089-2b22-4db5-a914-43ce41986c70"
-DISPLAY_CHAR_UUID    = "32e6108a-2b22-4db5-a914-43ce41986c70"
-NOTIFY_CHAR_UUID    = "32e62902-2b22-4db5-a914-43ce41986c70"
+LETSGO_SERVICE_UUID = "32e61089-2b22-4db5-a914-43ce41986c70"
+LETSGO_ACCEL_UUID    = "32e6108a-2b22-4db5-a914-43ce41986c70"
+LETSGO_GYRO_UUID    = "32e6108b-2b22-4db5-a914-43ce41986c70"
+LETSGO_MAGNET_UUID    = "32e6108c-2b22-4db5-a914-43ce41986c70"
+LETSGO_FLEX_UUID    = "32e6108d-2b22-4db5-a914-43ce41986c70"
 
+CH_UUIDs = [LETSGO_ACCEL_UUID, LETSGO_GYRO_UUID, LETSGO_MAGNET_UUID, LETSGO_FLEX_UUID]
+CH_NAME = ["accel", "gyro", "magnet", "flex"]
 try:
     print("connecting")
     buckler = Peripheral(addr)
@@ -74,14 +80,15 @@ try:
 
 
     # Get service
-    sv = buckler.getServiceByUUID(DISPLAY_SERVICE_UUID)
+    sv = buckler.getServiceByUUID(LETSGO_SERVICE_UUID)
     # Get characteristic
-    ch = sv.getCharacteristics(DISPLAY_CHAR_UUID)[0]
+    chs = [sv.getCharacteristics(uuid)[0] for uuid in CH_UUIDs]
+    delegate.setLetsGo(imu_data, client1)
     #ch.write(bytes("testing", 'utf-8'))
-    delegate.setLetsGoCHandle(ch.getHandle(), imu_data, client1)
-    dess = ch.getDescriptors()
-    print(type(dess[0]))
-    dess[0].write(bytes([0x01]))
+    for i, ch in enumerate(chs):
+        delegate.addPairCHandle((ch.getHandle(), CH_NAME[i]))
+        dess = ch.getDescriptors()
+        dess[0].write(bytes([0x01]))
 
 
     # if buckler.waitForNotifications(100.0):
@@ -90,10 +97,6 @@ try:
     while True:
         if buckler.waitForNotifications(10.0):
             print("completated!")
-        else:
-            print("No notifications")
-            display = input("Enter a message to write to the display:\n")
-            ch.write(bytes(display, 'utf-8'))
     # while True:
     #     # return type is "bytes"
     #     readbytes = ch.read()
