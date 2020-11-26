@@ -62,22 +62,28 @@ void saadc_init(void)
   // Configure the input as Single Ended(One Pin Reading)
   // Make sure you allocate the right pin.
   nrf_saadc_channel_config_t channel_config0 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
+  nrf_saadc_channel_config_t channel_config1 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN1);
   nrf_saadc_channel_config_t channel_config2 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN2);
-
+  nrf_saadc_channel_config_t channel_config3 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN3);
+  /* 
+  AIN0 P0.02
+  AIN1 P0.03
+  AIN2 P0.04
+  AIN3 P0.05
+  */
   // Initialize the saadc 
-  // first parameter is for configuring the adc resolution and other features, we will see in future tutorial
-  //on how to work with it. right now just pass a simple null value
   err_code = nrf_drv_saadc_init(NULL, saadc_callback_handler);
   APP_ERROR_CHECK(err_code);
 
-// Initialize the Channel which will be connected to that specific pin.
+  // Initialize the Channel which will be connected to that specific pin.
   err_code = nrfx_saadc_channel_init(0, &channel_config0);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(1, &channel_config1);
   APP_ERROR_CHECK(err_code);
   err_code = nrfx_saadc_channel_init(2, &channel_config2);
   APP_ERROR_CHECK(err_code);
-
-  
-
+  err_code = nrfx_saadc_channel_init(3, &channel_config3);
+  APP_ERROR_CHECK(err_code);
 }
 
 
@@ -93,51 +99,45 @@ void log_init(void)
 
 }
 
-/**
- * @brief Function for main application entry.
- */
 int main(void)
 {
 	
 	// call the log initialization function
   log_init();
 
-// call the saadc initialization function created above
+  // call the saadc initialization function created above
   saadc_init();
 
-// a struct to hold 16-bit value, create a variable of this type because our input resolution may vary from 8 bit to 14 bits depending on our configurations
-// this variable holds the adc sample value
+  // a struct to hold 16-bit value, create a variable of this type because our input resolution may vary from 8 bit to 14 bits depending on our configurations
+  // this variable holds the adc sample value
   nrf_saadc_value_t adc_val0;
+  nrf_saadc_value_t adc_val1;
   nrf_saadc_value_t adc_val2;
+  nrf_saadc_value_t adc_val3;
 
-
-// Print a simple msg that everything started without any error
+  // Print a simple msg that everything started without any error
   NRF_LOG_INFO("Application Started!!!");
-
-
-   
-// Inifinite loop
-    while (1)
-    {
-		// a blocking function which will be called and the processor waits until the value is read
-		// the sample value read is in 2's complement and is automatically converted once retrieved
-		// first parameter is for the adc input channel 
-		// second parameter is to pass the address of the variable in which we store our adc sample value
+  // Inifinite loop
+  while (1)
+  {
+      // a blocking function which will be called and the processor waits until the value is read
+      // the sample value read is in 2's complement and is automatically converted once retrieved
+      // first parameter is for the adc input channel 
+      // second parameter is to pass the address of the variable in which we store our adc sample value
       nrfx_saadc_sample_convert(0, &adc_val0);
+      nrfx_saadc_sample_convert(1, &adc_val1);
       nrfx_saadc_sample_convert(2, &adc_val2);
+      nrfx_saadc_sample_convert(3, &adc_val3);
 
-		// print this value using nrf log : here %d represents the integer value 
-      //NRF_LOG_INFO("Sample value Read: %d", adc_val);
-		
-		// use nrf log and float marker to show the floating point values on the log
-		// calculate the voltage by this: input_sample * 3.6 / 2^n (where n = 8 or 10 or 12 or 14 depending on our configuration for resolution in bits)
-      //NRF_LOG_INFO("Volts: " NRF_LOG_FLOAT_MARKER "\r\n", NRF_LOG_FLOAT(adc_val * 3.6 / 512));
-      NRF_LOG_INFO("Volts 0: " NRF_LOG_FLOAT_MARKER "\r\n", NRF_LOG_FLOAT(adc_val0 * 1.8 / 512));
-      NRF_LOG_INFO("Volts 2: " NRF_LOG_FLOAT_MARKER "\r\n", NRF_LOG_FLOAT(adc_val2 * 1.8 / 512));
+      // use nrf log and float marker to show the floating point values on the log
+      //maybe times 3.6...
+      NRF_LOG_INFO("Volts 0: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val0 * 1.8 / 512));
+      NRF_LOG_INFO("Volts 1: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val1 * 1.8 / 512));
+      NRF_LOG_INFO("Volts 2: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val2 * 1.8 / 512));
+      NRF_LOG_INFO("Volts 3: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val3 * 1.8 / 512));
        
-	   // give 500ms delay 
-       nrf_delay_ms(500);
-     
+      // give 500ms delay 
+      nrf_delay_ms(500);
     }
 }
 
