@@ -29,8 +29,8 @@ void twi_init(void)
 
 // Create a struct with configurations and pass the values to these configurations.
   const nrf_drv_twi_config_t twi_config = {
-    .scl                = 22, // scl connected to pin 22, you can change it to any other pin
-    .sda                = 23, // sda connected to pin 23, you can change it to any other pin
+    .scl                = 27, // scl connected to pin 22, you can change it to any other pin
+    .sda                = 26, // sda connected to pin 23, you can change it to any other pin
     .frequency          = NRF_DRV_TWI_FREQ_100K, // set the communication speed to 100K, we can select 250k or 400k as well
     .interrupt_priority = APP_IRQ_PRIORITY_HIGH, // Interrupt priority is set to high, keep in mind to change it if you are using a soft-device
     .clear_bus_init     = false // automatic bus clearing 
@@ -51,7 +51,7 @@ int main(void)
 {
 
   ret_code_t err_code; // a variable to hold error code value
-  uint8_t address = 0x68; // address of the sensor
+  uint8_t address = 0x6B; // address of the sensor
   uint8_t sample_data = 0x00; // sample data initialized with 0 value.
 
 // initialize the Logger so that we can print msgs on the logger
