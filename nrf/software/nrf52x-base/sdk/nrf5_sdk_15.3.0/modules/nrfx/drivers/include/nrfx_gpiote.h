@@ -411,7 +411,7 @@ void nrfx_gpiote_clr_task_trigger(nrfx_gpiote_pin_t pin);
 #endif // defined(GPIOTE_FEATURE_CLR_PRESENT) || defined(__NRFX_DOXYGEN__)
 
 
-void nrfx_gpiote_irq_handler(void);
+// void nrfx_gpiote_irq_handler(void);
 
 
 /** @} */

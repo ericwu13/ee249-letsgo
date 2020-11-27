@@ -18,6 +18,10 @@ https://github.com/sparkfun/SparkFun_LSM9DS1_Arduino_Library/blob/master/src/Spa
 //
 // i2c - pointer to already initialized and enabled twim instance
 ret_code_t lsm9ds1_init(const nrf_twi_mngr_t* i2c);
+ret_code_t lsm9ds1_intcfg();
+
+uint8_t getAccelIntSrc();
+uint8_t getGyroIntSrc();
 
 // Read all three axes on the accelerometer
 //

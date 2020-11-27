@@ -665,164 +665,164 @@ uint32_t nrfx_gpiote_in_event_addr_get(nrfx_gpiote_pin_t pin)
 }
 
 
-void nrfx_gpiote_irq_handler(void)
-{
-    uint32_t status            = 0;
-    uint32_t input[GPIO_COUNT] = {0};
+// void nrfx_gpiote_irq_handler(void)
+// {
+//     uint32_t status            = 0;
+//     uint32_t input[GPIO_COUNT] = {0};
 
-    /* collect status of all GPIOTE pin events. Processing is done once all are collected and cleared.*/
-    uint32_t            i;
-    nrf_gpiote_events_t event = NRF_GPIOTE_EVENTS_IN_0;
-    uint32_t            mask  = (uint32_t)NRF_GPIOTE_INT_IN0_MASK;
+//     /* collect status of all GPIOTE pin events. Processing is done once all are collected and cleared.*/
+//     uint32_t            i;
+//     nrf_gpiote_events_t event = NRF_GPIOTE_EVENTS_IN_0;
+//     uint32_t            mask  = (uint32_t)NRF_GPIOTE_INT_IN0_MASK;
 
-    for (i = 0; i < GPIOTE_CH_NUM; i++)
-    {
-        if (nrf_gpiote_event_is_set(event) && nrf_gpiote_int_is_enabled(mask))
-        {
-            nrf_gpiote_event_clear(event);
-            status |= mask;
-        }
-        mask <<= 1;
-        /* Incrementing to next event, utilizing the fact that events are grouped together
-         * in ascending order. */
-        event = (nrf_gpiote_events_t)((uint32_t)event + sizeof(uint32_t));
-    }
+//     for (i = 0; i < GPIOTE_CH_NUM; i++)
+//     {
+//         if (nrf_gpiote_event_is_set(event) && nrf_gpiote_int_is_enabled(mask))
+//         {
+//             nrf_gpiote_event_clear(event);
+//             status |= mask;
+//         }
+//         mask <<= 1;
+//         /* Incrementing to next event, utilizing the fact that events are grouped together
+//          * in ascending order. */
+//         event = (nrf_gpiote_events_t)((uint32_t)event + sizeof(uint32_t));
+//     }
 
-    /* collect PORT status event, if event is set read pins state. Processing is postponed to the
-     * end of interrupt. */
-    if (nrf_gpiote_event_is_set(NRF_GPIOTE_EVENTS_PORT))
-    {
-        nrf_gpiote_event_clear(NRF_GPIOTE_EVENTS_PORT);
-        status |= (uint32_t)NRF_GPIOTE_INT_PORT_MASK;
-        nrf_gpio_ports_read(0, GPIO_COUNT, input);
-    }
+//     /* collect PORT status event, if event is set read pins state. Processing is postponed to the
+//      * end of interrupt. */
+//     if (nrf_gpiote_event_is_set(NRF_GPIOTE_EVENTS_PORT))
+//     {
+//         nrf_gpiote_event_clear(NRF_GPIOTE_EVENTS_PORT);
+//         status |= (uint32_t)NRF_GPIOTE_INT_PORT_MASK;
+//         nrf_gpio_ports_read(0, GPIO_COUNT, input);
+//     }
 
-    /* Process pin events. */
-    if (status & NRF_GPIOTE_INT_IN_MASK)
-    {
-        mask = (uint32_t)NRF_GPIOTE_INT_IN0_MASK;
+//     /* Process pin events. */
+//     if (status & NRF_GPIOTE_INT_IN_MASK)
+//     {
+//         mask = (uint32_t)NRF_GPIOTE_INT_IN0_MASK;
 
-        for (i = 0; i < GPIOTE_CH_NUM; i++)
-        {
-            if (mask & status)
-            {
-                nrfx_gpiote_pin_t pin = nrf_gpiote_event_pin_get(i);
-                NRFX_LOG_DEBUG("Event in number: %d.", i);
-                nrf_gpiote_polarity_t        polarity = nrf_gpiote_event_polarity_get(i);
-                nrfx_gpiote_evt_handler_t handler  = channel_handler_get(i);
-                NRFX_LOG_DEBUG("Pin: %d, polarity: %d.", pin, polarity);
-                if (handler)
-                {
-                    handler(pin, polarity);
-                }
-            }
-            mask <<= 1;
-        }
-    }
+//         for (i = 0; i < GPIOTE_CH_NUM; i++)
+//         {
+//             if (mask & status)
+//             {
+//                 nrfx_gpiote_pin_t pin = nrf_gpiote_event_pin_get(i);
+//                 NRFX_LOG_DEBUG("Event in number: %d.", i);
+//                 nrf_gpiote_polarity_t        polarity = nrf_gpiote_event_polarity_get(i);
+//                 nrfx_gpiote_evt_handler_t handler  = channel_handler_get(i);
+//                 NRFX_LOG_DEBUG("Pin: %d, polarity: %d.", pin, polarity);
+//                 if (handler)
+//                 {
+//                     handler(pin, polarity);
+//                 }
+//             }
+//             mask <<= 1;
+//         }
+//     }
 
-    if (status & (uint32_t)NRF_GPIOTE_INT_PORT_MASK)
-    {
-        /* Process port event. */
-        uint32_t port_idx;
-        uint8_t  repeat                  = 0;
-        uint32_t toggle_mask[GPIO_COUNT] = {0};
-        uint32_t pins_to_check[GPIO_COUNT];
+//     if (status & (uint32_t)NRF_GPIOTE_INT_PORT_MASK)
+//     {
+//         /* Process port event. */
+//         uint32_t port_idx;
+//         uint8_t  repeat                  = 0;
+//         uint32_t toggle_mask[GPIO_COUNT] = {0};
+//         uint32_t pins_to_check[GPIO_COUNT];
 
-        // Faster way of doing memset because in interrupt context.
-        for (port_idx = 0; port_idx < GPIO_COUNT; port_idx++)
-        {
-            pins_to_check[port_idx] = 0xFFFFFFFF;
-        }
+//         // Faster way of doing memset because in interrupt context.
+//         for (port_idx = 0; port_idx < GPIO_COUNT; port_idx++)
+//         {
+//             pins_to_check[port_idx] = 0xFFFFFFFF;
+//         }
 
-        do
-        {
-            repeat = 0;
+//         do
+//         {
+//             repeat = 0;
 
-            for (i = 0; i < NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS; i++)
-            {
-                uint8_t           pin_and_sense = (uint8_t)m_cb.port_handlers_pins[i];
-                nrfx_gpiote_pin_t pin           = (pin_and_sense & ~SENSE_FIELD_MASK);
+//             for (i = 0; i < NRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS; i++)
+//             {
+//                 uint8_t           pin_and_sense = (uint8_t)m_cb.port_handlers_pins[i];
+//                 nrfx_gpiote_pin_t pin           = (pin_and_sense & ~SENSE_FIELD_MASK);
 
-                if ((m_cb.port_handlers_pins[i] != PIN_NOT_USED)
-                    && nrf_bitmask_bit_is_set(pin, pins_to_check))
-                {
-                    nrf_gpiote_polarity_t polarity =
-                        (nrf_gpiote_polarity_t)((pin_and_sense &
-                                                 SENSE_FIELD_MASK) >> SENSE_FIELD_POS);
-                    nrfx_gpiote_evt_handler_t handler =
-                        channel_handler_get((uint32_t)channel_port_get(pin));
-                    if (handler || (polarity == NRF_GPIOTE_POLARITY_TOGGLE))
-                    {
-                        if (polarity == NRF_GPIOTE_POLARITY_TOGGLE)
-                        {
-                            nrf_bitmask_bit_set(pin, toggle_mask);
-                        }
-                        nrf_gpio_pin_sense_t sense     = nrf_gpio_pin_sense_get(pin);
-                        uint32_t             pin_state = nrf_bitmask_bit_is_set(pin, input);
-                        if ((pin_state && (sense == NRF_GPIO_PIN_SENSE_HIGH)) ||
-                            (!pin_state && (sense == NRF_GPIO_PIN_SENSE_LOW))  )
-                        {
-                            NRFX_LOG_DEBUG("PORT event for pin: %d, polarity: %d.", pin, polarity);
-                            if (polarity == NRF_GPIOTE_POLARITY_TOGGLE)
-                            {
-                                nrf_gpio_pin_sense_t next_sense =
-                                    (sense == NRF_GPIO_PIN_SENSE_HIGH) ?
-                                    NRF_GPIO_PIN_SENSE_LOW :
-                                    NRF_GPIO_PIN_SENSE_HIGH;
-                                nrf_gpio_cfg_sense_set(pin, next_sense);
-                                ++repeat;
+//                 if ((m_cb.port_handlers_pins[i] != PIN_NOT_USED)
+//                     && nrf_bitmask_bit_is_set(pin, pins_to_check))
+//                 {
+//                     nrf_gpiote_polarity_t polarity =
+//                         (nrf_gpiote_polarity_t)((pin_and_sense &
+//                                                  SENSE_FIELD_MASK) >> SENSE_FIELD_POS);
+//                     nrfx_gpiote_evt_handler_t handler =
+//                         channel_handler_get((uint32_t)channel_port_get(pin));
+//                     if (handler || (polarity == NRF_GPIOTE_POLARITY_TOGGLE))
+//                     {
+//                         if (polarity == NRF_GPIOTE_POLARITY_TOGGLE)
+//                         {
+//                             nrf_bitmask_bit_set(pin, toggle_mask);
+//                         }
+//                         nrf_gpio_pin_sense_t sense     = nrf_gpio_pin_sense_get(pin);
+//                         uint32_t             pin_state = nrf_bitmask_bit_is_set(pin, input);
+//                         if ((pin_state && (sense == NRF_GPIO_PIN_SENSE_HIGH)) ||
+//                             (!pin_state && (sense == NRF_GPIO_PIN_SENSE_LOW))  )
+//                         {
+//                             NRFX_LOG_DEBUG("PORT event for pin: %d, polarity: %d.", pin, polarity);
+//                             if (polarity == NRF_GPIOTE_POLARITY_TOGGLE)
+//                             {
+//                                 nrf_gpio_pin_sense_t next_sense =
+//                                     (sense == NRF_GPIO_PIN_SENSE_HIGH) ?
+//                                     NRF_GPIO_PIN_SENSE_LOW :
+//                                     NRF_GPIO_PIN_SENSE_HIGH;
+//                                 nrf_gpio_cfg_sense_set(pin, next_sense);
+//                                 ++repeat;
 
-                            }
-                            if (handler)
-                            {
-                                handler(pin, polarity);
-                            }
-                        }
-                    }
-                }
-            }
+//                             }
+//                             if (handler)
+//                             {
+//                                 handler(pin, polarity);
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
 
-            if (repeat)
-            {
-                // When one of the pins in low-accuracy and toggle mode becomes active,
-                // it's sense mode is inverted to clear the internal SENSE signal.
-                // State of any other enabled low-accuracy input in toggle mode must be checked
-                // explicitly, because it does not trigger the interrput when SENSE signal is active.
-                // For more information about SENSE functionality, refer to Product Specification.
+//             if (repeat)
+//             {
+//                 // When one of the pins in low-accuracy and toggle mode becomes active,
+//                 // it's sense mode is inverted to clear the internal SENSE signal.
+//                 // State of any other enabled low-accuracy input in toggle mode must be checked
+//                 // explicitly, because it does not trigger the interrput when SENSE signal is active.
+//                 // For more information about SENSE functionality, refer to Product Specification.
 
-                uint32_t new_input[GPIO_COUNT];
-                bool     input_unchanged = true;
-                nrf_gpio_ports_read(0, GPIO_COUNT, new_input);
+//                 uint32_t new_input[GPIO_COUNT];
+//                 bool     input_unchanged = true;
+//                 nrf_gpio_ports_read(0, GPIO_COUNT, new_input);
 
-                // Faster way of doing memcmp because in interrupt context.
-                for (port_idx = 0; port_idx < GPIO_COUNT; port_idx++)
-                {
-                    if (new_input[port_idx] != input[port_idx])
-                    {
-                        input_unchanged = false;
-                        break;
-                    }
-                }
+//                 // Faster way of doing memcmp because in interrupt context.
+//                 for (port_idx = 0; port_idx < GPIO_COUNT; port_idx++)
+//                 {
+//                     if (new_input[port_idx] != input[port_idx])
+//                     {
+//                         input_unchanged = false;
+//                         break;
+//                     }
+//                 }
 
-                if (input_unchanged)
-                {
-                    // No change.
-                    repeat = 0;
-                }
-                else
-                {
-                    // Faster way of doing memcpy because in interrupt context.
-                    for (port_idx = 0; port_idx < GPIO_COUNT; port_idx++)
-                    {
-                        input[port_idx]         = new_input[port_idx];
-                        pins_to_check[port_idx] = toggle_mask[port_idx];
-                    }
-                }
-            }
-        }
-        while (repeat);
-    }
-}
+//                 if (input_unchanged)
+//                 {
+//                     // No change.
+//                     repeat = 0;
+//                 }
+//                 else
+//                 {
+//                     // Faster way of doing memcpy because in interrupt context.
+//                     for (port_idx = 0; port_idx < GPIO_COUNT; port_idx++)
+//                     {
+//                         input[port_idx]         = new_input[port_idx];
+//                         pins_to_check[port_idx] = toggle_mask[port_idx];
+//                     }
+//                 }
+//             }
+//         }
+//         while (repeat);
+//     }
+// }
 
 
 /*lint -restore*/

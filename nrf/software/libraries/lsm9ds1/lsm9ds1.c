@@ -523,3 +523,139 @@ lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   return integrated_angle;
 }
 
+// Interrupt Functions
+void configInt(interrupt_select interrupt, uint8_t generator,
+	                     h_lactive activeLow, pp_od pushPull)
+{
+	// Write to INT1_CTRL or INT2_CTRL. [interupt] should already be one of
+	// those two values.
+	// [generator] should be an OR'd list of values from the interrupt_generators enum
+	i2c_reg_write(settings.device.agAddress, interrupt, generator);
+	
+	// Configure CTRL_REG8
+	uint8_t temp;
+  temp = i2c_reg_read(settings.device.agAddress, CTRL_REG8);
+	
+	if (activeLow) temp |= (1<<5);
+	else temp &= ~(1<<5);
+	
+	if (pushPull) temp &= ~(1<<4);
+	else temp |= (1<<4);
+	
+	i2c_reg_write(settings.device.agAddress, CTRL_REG8, temp);
+}
+
+void configGyroInt(uint8_t generator, bool aoi, bool latch)
+{
+	// Use variables from accel_interrupt_generator, OR'd together to create
+	// the [generator]value.
+	uint8_t temp = generator;
+	if (aoi) temp |= 0x80;
+	if (latch) temp |= 0x40;
+  i2c_reg_write(settings.device.agAddress, INT_GEN_CFG_G, temp);
+}
+
+
+void configGyroThs(int16_t threshold, lsm9ds1_axis axis, uint8_t duration, bool wait)
+{
+	uint8_t buffer[2];
+	buffer[0] = (threshold & 0x7F00) >> 8;
+	buffer[1] = (threshold & 0x00FF);
+	// Write threshold value to INT_GEN_THS_?H_G and  INT_GEN_THS_?L_G.
+	// axis will be 0, 1, or 2 (x, y, z respectively)
+	i2c_reg_write(settings.device.agAddress, INT_GEN_THS_XH_G + (axis * 2), buffer[0]);
+	i2c_reg_write(settings.device.agAddress, INT_GEN_THS_XH_G + 1 + (axis * 2), buffer[1]);
+	
+	// Write duration and wait to INT_GEN_DUR_XL
+	uint8_t temp;
+	temp = (duration & 0x7F);
+	if (wait) temp |= 0x80;
+	i2c_reg_write(settings.device.agAddress, INT_GEN_DUR_G, temp);
+}
+
+void configAccelInt(uint8_t generator, bool andInterrupts)
+{
+	// Use variables from accel_interrupt_generator, OR'd together to create
+	// the [generator]value.
+	uint8_t temp = generator;
+	if (andInterrupts) temp |= 0x80;
+	i2c_reg_write(settings.device.agAddress, INT_GEN_CFG_XL, temp);
+}
+
+void configAccelThs(uint8_t threshold, lsm9ds1_axis axis, uint8_t duration, bool wait)
+{
+	// Write threshold value to INT_GEN_THS_?_XL.
+	// axis will be 0, 1, or 2 (x, y, z respectively)
+	i2c_reg_write(settings.device.agAddress, INT_GEN_THS_X_XL + axis, threshold);
+	
+	// Write duration and wait to INT_GEN_DUR_XL
+	uint8_t temp;
+	temp = (duration & 0x7F);
+	if (wait) temp |= 0x80;
+	i2c_reg_write(settings.device.agAddress, INT_GEN_DUR_XL, temp);
+}
+
+
+ret_code_t lsm9ds1_intcfg() {
+  configGyroInt(ZHIE_G, false, false);
+  // 2. Configure the gyro threshold
+  //   - 500: Threshold (raw value from gyro)
+  //   - Z_AXIS: Z-axis threshold
+  //   - 10: duration (based on ODR)
+  //   - true: wait (wait duration before interrupt goes low)
+  configGyroThs(500, Z_AXIS, 10, true);
+  float ths = 500 - gBiasRaw[Z_AXIS];
+
+  ths = ths * gRes;
+  printf("Threadhold: %f\n", ths);
+  // 3. Configure accelerometer interrupt generator:
+  //   - XHIE_XL: x-axis high event
+  //     More axis events can be or'd together
+  //   - false: OR interrupts (N/A, since we only have 1)
+  configAccelInt(XHIE_XL, false);
+  // 4. Configure accelerometer threshold:
+  //   - 20: Threshold (raw value from accel)
+  //     Multiply this value by 128 to get threshold value.
+  //     (20 = 2600 raw accel value)
+  //   - X_AXIS: Write to X-axis threshold
+  //   - 10: duration (based on ODR)
+  //   - false: wait (wait [duration] before interrupt goes low)
+  configAccelThs(20, X_AXIS, 1, false);
+  // 5. Configure INT1 - assign it to gyro interrupt
+  //   - XG_INT1: Says we're configuring INT1
+  //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
+  //     both gyro interrupt and accel
+  //   - INT_ACTIVE_LOW: Sets interrupt to active low.
+  //         (Can otherwise be set to INT_ACTIVE_HIGH.)
+  //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
+  //         (Can otherwise be set to INT_OPEN_DRAIN.)
+  configInt(XG_INT1, INT1_IG_G /*| INT_IG_XL*/, INT_ACTIVE_LOW, INT_PUSH_PULL);
+  return NRF_SUCCESS;
+}
+
+
+uint8_t getAccelIntSrc()
+{
+	uint8_t intSrc = i2c_reg_read(settings.device.agAddress, INT_GEN_SRC_XL);
+	
+	// Check if the IA_XL (interrupt active) bit is set
+	if (intSrc & (1<<6))
+	{
+		return (intSrc & 0x3F);
+	}
+	
+	return 0;
+}
+
+uint8_t getGyroIntSrc()
+{
+	uint8_t intSrc = i2c_reg_read(settings.device.agAddress, INT_GEN_SRC_G);
+	
+	// Check if the IA_G (interrupt active) bit is set
+	if (intSrc & (1<<6))
+	{
+		return (intSrc & 0x3F);
+	}
+	
+	return 0;
+}
