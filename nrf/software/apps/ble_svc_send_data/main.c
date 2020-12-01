@@ -37,7 +37,7 @@
 #include "app_error.h"
 #include "app_util_platform.h"
 
-#define NUM_IMU_DATA 14
+#define NUM_IMU_DATA 13
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
         // c0:98:e5:49:xx:xx
@@ -140,8 +140,6 @@ void read_IMU(float* data, int length)
     data[10] = adc_val1 * 1.8 / 512;
     data[11] = adc_val2 * 1.8 / 512;
     data[12] = adc_val3 * 1.8 / 512;
-    data[13] = 0; 
-    // TODO: read flex sensor
     return;
 }
 void print_IMU(float* data, int length)
@@ -149,7 +147,7 @@ void print_IMU(float* data, int length)
   printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
   printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
   printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
-  printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
+  printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12]);
 }
 
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
@@ -213,7 +211,7 @@ int main(void) {
        sizeof(float) * 3, (uint8_t*)&(IMU_data[6]),
        &letsgo_service, &letsgo_magnet_char);
   simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 5, (uint8_t*)&(IMU_data[9]),
+       sizeof(float) * 4, (uint8_t*)&(IMU_data[9]),
        &letsgo_service, &letsgo_flex_char);
   // Start Advertising
   simple_ble_adv_only_name();
