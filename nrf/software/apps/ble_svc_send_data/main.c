@@ -17,22 +17,25 @@
 
 #include "max44009.h"
 
-#include "nrf.h"
-#include "nrf_delay.h"
-#include "nrf_gpio.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_drv_spi.h"
 
-#include "buckler.h"
-#include "display.h"
 #include "kobukiActuator.h"
 #include "kobukiSensorPoll.h"
 #include "kobukiSensorTypes.h"
 #include "kobukiUtilities.h"
-#include "lsm9ds1.h"
+
+#include <stdio.h>
+#include <string.h>
+#include "nrf_drv_saadc.h"
+#include "nrf_drv_ppi.h"
+#include "nrf_drv_timer.h"
+#include "boards.h"
+#include "app_error.h"
+#include "app_util_platform.h"
 
 #define NUM_IMU_DATA 14
 // Intervals for advertising and connections
@@ -57,6 +60,38 @@ static simple_ble_char_t letsgo_gyro_char = {.uuid16 = 0x108b};
 static simple_ble_char_t letsgo_magnet_char = {.uuid16 = 0x108c};
 static simple_ble_char_t letsgo_flex_char = {.uuid16 = 0x108d};
 static float IMU_data[NUM_IMU_DATA];
+
+void saadc_callback_handler(nrf_drv_saadc_evt_t const * p_event){}
+void saadc_init(void)
+{
+  ret_code_t err_code;
+
+  nrf_saadc_channel_config_t channel_config0 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
+  nrf_saadc_channel_config_t channel_config1 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN1);
+  nrf_saadc_channel_config_t channel_config2 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN2);
+  nrf_saadc_channel_config_t channel_config3 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN3);
+  /* 
+  AIN0 P0.02
+  AIN1 P0.03
+  AIN2 P0.04
+  AIN3 P0.05
+  */
+  err_code = nrf_drv_saadc_init(NULL, saadc_callback_handler);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(0, &channel_config0);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(1, &channel_config1);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(2, &channel_config2);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(3, &channel_config3);
+  APP_ERROR_CHECK(err_code);
+}
+void log_init(void)
+{
+  APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
+  NRF_LOG_DEFAULT_BACKENDS_INIT();
+}
 
 /*******************************************************************************
  *   State for this application
@@ -149,6 +184,13 @@ int main(void) {
   initialization of IMU & flexsensors
   initialization of the communication to the IMU & flexsors.
   */
+  log_init();
+  saadc_init();
+  nrf_saadc_value_t adc_val0;
+  nrf_saadc_value_t adc_val1;
+  nrf_saadc_value_t adc_val2;
+  nrf_saadc_value_t adc_val3;
+  NRF_LOG_INFO("Application Started!!!");
 
   simple_ble_add_characteristic(1, 1, 1, 0,
        sizeof(float) * 3, (uint8_t*)&(IMU_data[0]),
@@ -170,6 +212,14 @@ int main(void) {
   int counter = 0;
   while(1) {
     nrf_delay_ms(1000);
+      nrfx_saadc_sample_convert(0, &adc_val0);
+      nrfx_saadc_sample_convert(1, &adc_val1);
+      nrfx_saadc_sample_convert(2, &adc_val2);
+      nrfx_saadc_sample_convert(3, &adc_val3);
+      NRF_LOG_INFO("Volts 0: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val0 * 1.8 / 512));
+      NRF_LOG_INFO("Volts 1: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val1 * 1.8 / 512));
+      NRF_LOG_INFO("Volts 2: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val2 * 1.8 / 512));
+      NRF_LOG_INFO("Volts 3: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val3 * 1.8 / 512));
     read_IMU(IMU_data, NUM_IMU_DATA);
     IMU_data[9] = (float)(counter++);
     error_code = simple_ble_notify_char(&letsgo_accel_char);
