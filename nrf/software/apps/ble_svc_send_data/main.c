@@ -119,6 +119,14 @@ void read_IMU(float* data, int length)
     lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
     lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
     lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
+    nrf_saadc_value_t adc_val0;
+    nrf_saadc_value_t adc_val1;
+    nrf_saadc_value_t adc_val2;
+    nrf_saadc_value_t adc_val3;
+    nrfx_saadc_sample_convert(0, &adc_val0);
+    nrfx_saadc_sample_convert(1, &adc_val1);
+    nrfx_saadc_sample_convert(2, &adc_val2);
+    nrfx_saadc_sample_convert(3, &adc_val3);
     data[0] = accel_val.x_axis;
     data[1] = accel_val.y_axis;
     data[2] = accel_val.z_axis;
@@ -128,6 +136,11 @@ void read_IMU(float* data, int length)
     data[6] = magnet_val.x_axis;
     data[7] = magnet_val.y_axis;
     data[8] = magnet_val.z_axis;
+    data[9] =  adc_val0 * 1.8 / 512;
+    data[10] = adc_val1 * 1.8 / 512;
+    data[11] = adc_val2 * 1.8 / 512;
+    data[12] = adc_val3 * 1.8 / 512;
+    data[13] = 0; 
     // TODO: read flex sensor
     return;
 }
@@ -186,10 +199,6 @@ int main(void) {
   */
   log_init();
   saadc_init();
-  nrf_saadc_value_t adc_val0;
-  nrf_saadc_value_t adc_val1;
-  nrf_saadc_value_t adc_val2;
-  nrf_saadc_value_t adc_val3;
   NRF_LOG_INFO("Application Started!!!");
 
   simple_ble_add_characteristic(1, 1, 1, 0,
@@ -209,19 +218,9 @@ int main(void) {
   // Start Advertising
   simple_ble_adv_only_name();
 
-  int counter = 0;
   while(1) {
     nrf_delay_ms(1000);
-      nrfx_saadc_sample_convert(0, &adc_val0);
-      nrfx_saadc_sample_convert(1, &adc_val1);
-      nrfx_saadc_sample_convert(2, &adc_val2);
-      nrfx_saadc_sample_convert(3, &adc_val3);
-      NRF_LOG_INFO("Volts 0: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val0 * 1.8 / 512));
-      NRF_LOG_INFO("Volts 1: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val1 * 1.8 / 512));
-      NRF_LOG_INFO("Volts 2: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val2 * 1.8 / 512));
-      NRF_LOG_INFO("Volts 3: " NRF_LOG_FLOAT_MARKER "\n", NRF_LOG_FLOAT(adc_val3 * 1.8 / 512));
     read_IMU(IMU_data, NUM_IMU_DATA);
-    IMU_data[9] = (float)(counter++);
     error_code = simple_ble_notify_char(&letsgo_accel_char);
     error_code = simple_ble_notify_char(&letsgo_gyro_char);
     error_code = simple_ble_notify_char(&letsgo_magnet_char);
