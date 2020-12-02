@@ -100,9 +100,19 @@ void print_IMU(float* data, int length)
 void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     // printf("Motion Detected\n");
-    printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
+    //read_IMU(IMU_data, NUM_IMU_DATA);
+    //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
+    moved = true;
     // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
+
+void isStop(float* data) {
+    if(fabs(data[0]) < 16000 &&
+       fabs(data[1]) < 16000 &&
+       fabs(data[2]) < 16000) return true;
+    return false
+}
+bool moved = false
 
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
@@ -111,7 +121,7 @@ int main(void) {
   nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
   i2c_config.scl = 27;
   i2c_config.sda = 26;
-  i2c_config.frequency = NRF_TWIM_FREQ_100K;
+  i2c_config.frequency = NRF_TWIM_FREQ_400K;
   ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
   APP_ERROR_CHECK(error_code);
   lsm9ds1_init(&twi_mngr_instance);
@@ -170,18 +180,22 @@ int main(void) {
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(100);
-    read_IMU(IMU_data, NUM_IMU_DATA);
-    IMU_data[9] = (float)(counter++);
-    error_code = simple_ble_notify_char(&letsgo_accel_char);
+    nrf_delay_ms(50);
+    //printf("%ld\n", getAccelIntSrc());
+    /*error_code = simple_ble_notify_char(&letsgo_accel_char);
     error_code = simple_ble_notify_char(&letsgo_gyro_char);
     error_code = simple_ble_notify_char(&letsgo_magnet_char);
     error_code = simple_ble_notify_char(&letsgo_flex_char);
-    APP_ERROR_CHECK(error_code);
+    APP_ERROR_CHECK(error_code);*/
     //print_IMU(IMU_data, NUM_IMU_DATA);
-    printf("%ld\n", getAccelIntSrc());
+    if(moved == true) {
+        read_IMU(IMU_data, NUM_IMU_DATA);
+        counter++;
+        if(isStop(IMU_data)) break;
+    }
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
   }
+  printf("Length of Data: %d", counter);
 }
 
