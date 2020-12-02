@@ -193,11 +193,13 @@ int main(void) {
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         counter++;
-        if(isStop(IMU_data)) break;
+        if(isStop(IMU_data)) {
+            moved = false;
+            printf("Length of Data: %d", counter);
+        }
     }
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
   }
-  printf("Length of Data: %d", counter);
 }
 
