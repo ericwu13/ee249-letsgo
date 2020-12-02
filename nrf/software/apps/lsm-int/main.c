@@ -106,13 +106,13 @@ void GPIOTE_IRQHandler(void) {
     // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
 
-void isStop(float* data) {
+bool isStop(float* data) {
     if(fabs(data[0]) < 16000 &&
        fabs(data[1]) < 16000 &&
-       fabs(data[2]) < 16000) return true;
-    return false
+       fabs(data[2]) < 16000) return true;;
+    return false;
 }
-bool moved = false
+bool moved = false;
 
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
