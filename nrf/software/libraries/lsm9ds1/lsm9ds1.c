@@ -25,6 +25,7 @@ static const nrf_drv_timer_t gyro_timer = NRFX_TIMER_INSTANCE(1);
 static lsm9ds1_measurement_t integrated_angle;
 static lsm9ds1_measurement_t integrated_speed;
 static uint32_t prev_timer_val;
+static uint32_t prev_timer_accel_val;
 
 static void gyro_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
   // don't care about events
@@ -533,7 +534,7 @@ lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
 lsm9ds1_measurement_t lsm9ds1_read_speed_integration() {
   uint32_t curr_timer_val = nrfx_timer_capture(&gyro_timer, NRF_TIMER_CC_CHANNEL0);
   float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
-  prev_timer_val = curr_timer_val;
+  //prev_timer_val = curr_timer_val;
   lsm9ds1_measurement_t angle = lsm9ds1_read_gyro_integration();
   lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
   float rad[3] = {angle.x_axis * M_PI / 180.0, angle.y_axis * M_PI / 180.0, angle.z_axis * M_PI / 180.0};
