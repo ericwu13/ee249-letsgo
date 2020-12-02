@@ -512,13 +512,13 @@ lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   prev_timer_val = curr_timer_val;
   //lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
   lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
-  if (measure.z_axis > 0.5 || measure.z_axis < -0.5) {
+  if (measure.z_axis > 0.1 || measure.z_axis < -0.1) {
     integrated_angle.z_axis += (measure.z_axis - 1) *time_diff;
   }
-  if (measure.x_axis > 0.5 || measure.x_axis < -0.5) {
+  if (measure.x_axis > 0.1 || measure.x_axis < -0.1) {
     integrated_angle.x_axis += measure.x_axis*time_diff;
   }
-  if (measure.y_axis > 0.5 || measure.y_axis < -0.5) {
+  if (measure.y_axis > 0.1 || measure.y_axis < -0.1) {
     integrated_angle.y_axis += measure.y_axis*time_diff;
   }
   return integrated_angle;
