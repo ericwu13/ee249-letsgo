@@ -183,8 +183,8 @@ int main(void) {
   int counter = 0;
   while(1) {
     nrf_delay_ms(50);
-    //getAccelIntSrc();
-    printf("%ld\n", getAccelIntSrc());
+    getAccelIntSrc();
+    //printf("%ld\n", getAccelIntSrc());
     /*error_code = simple_ble_notify_char(&letsgo_accel_char);
     error_code = simple_ble_notify_char(&letsgo_gyro_char);
     error_code = simple_ble_notify_char(&letsgo_magnet_char);
@@ -196,6 +196,7 @@ int main(void) {
         counter++;
         if(isStop(IMU_data)) {
             moved = false;
+            counter = 0;
             printf("Length of Data: %d", counter);
         }
     }
