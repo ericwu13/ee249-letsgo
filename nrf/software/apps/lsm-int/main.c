@@ -103,7 +103,7 @@ void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     // printf("Motion Detected\n");
     //read_IMU(IMU_data, NUM_IMU_DATA);
-    //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
+    printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
     moved = true;
     // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
@@ -183,6 +183,7 @@ int main(void) {
   int counter = 0;
   while(1) {
     nrf_delay_ms(50);
+    //getAccelIntSrc();
     //printf("%ld\n", getAccelIntSrc());
     /*error_code = simple_ble_notify_char(&letsgo_accel_char);
     error_code = simple_ble_notify_char(&letsgo_gyro_char);
