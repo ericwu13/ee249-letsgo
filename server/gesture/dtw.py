@@ -88,7 +88,6 @@ class DTWManager():
         if signal2 is not None:
             if signal2.shape[1] != self.dim:
                 BaseException("Error, signal 1 and signal2 should have the same dimension as original signal")
-        else:
             self._incremental_dtw_oneside2(signal2)
 
         return self.d[self.n, self.m]
