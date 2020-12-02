@@ -521,7 +521,6 @@ lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
   prev_timer_val = curr_timer_val;
   lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
-  //lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
   if (measure.z_axis > 0.5 || measure.z_axis < -0.5) {
     integrated_angle.z_axis += measure.z_axis*time_diff;
   }
