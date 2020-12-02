@@ -435,15 +435,15 @@ lsm9ds1_measurement_t lsm9ds1_read_accelerometer() {
   ax = (temp[1] << 8) | temp[0];
   ay = (temp[3] << 8) | temp[2];
   az = (temp[5] << 8) | temp[4];
-  /*if (autocalc) {
+  if (autocalc) {
     ax -= aBiasRaw[X_AXIS];
     ay -= aBiasRaw[Y_AXIS];
     az -= aBiasRaw[Z_AXIS];
-  }*/
+  }
 
-  meas.x_axis = ax /** aRes*/;
-  meas.y_axis = ay /** aRes*/;
-  meas.z_axis = az /** aRes*/;
+  meas.x_axis = ax * aRes;
+  meas.y_axis = ay * aRes;
+  meas.z_axis = az * aRes;
   return meas;
 }
 
@@ -506,13 +506,18 @@ void lsm9ds1_stop_gyro_integration() {
   nrfx_timer_disable(&gyro_timer);
 }
 
+void lsm9ds1_stop_gyro_integration() {
+  nrfx_timer_disable(&gyro_timer);
+}
+
 lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   uint32_t curr_timer_val = nrfx_timer_capture(&gyro_timer, NRF_TIMER_CC_CHANNEL0);
   float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
   prev_timer_val = curr_timer_val;
-  lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
+  //lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
+  lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
   if (measure.z_axis > 0.5 || measure.z_axis < -0.5) {
-    integrated_angle.z_axis += measure.z_axis*time_diff;
+    integrated_angle.z_axis += (measure.z_axis - 1) *time_diff;
   }
   if (measure.x_axis > 0.5 || measure.x_axis < -0.5) {
     integrated_angle.x_axis += measure.x_axis*time_diff;
@@ -622,9 +627,9 @@ ret_code_t lsm9ds1_intcfg() {
   //   - X_AXIS: Write to X-axis threshold
   //   - 10: duration (based on ODR)
   //   - false: wait (wait [duration] before interrupt goes low)
-  configAccelThs(135, X_AXIS, 1, false);
-  configAccelThs(135, Y_AXIS, 1, false);
-  configAccelThs(135, Z_AXIS, 1, false);
+  configAccelThs(130, X_AXIS, 1, false);
+  configAccelThs(130, Y_AXIS, 1, false);
+  configAccelThs(130, Z_AXIS, 1, false);
   // 5. Configure INT1 - assign it to gyro interrupt
   //   - XG_INT1: Says we're configuring INT1
   //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
