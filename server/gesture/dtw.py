@@ -19,4 +19,5 @@ def DTW(signal1, signal2, costFuntion):
     return d[n, m]
 
 if __name__ == "__main__":
-    DTW(np.array([1,1,2,2,2,7,2,3,4,5]), np.array([1,2,3,4,5]), distanceCostFunction)
+    a = DTW(np.array([1,1,2,2,2,7,2,3,4,5]), np.array([1,2,3,4,5]), distanceCostFunction)
+    print(a)
