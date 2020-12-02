@@ -519,14 +519,14 @@ lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
   prev_timer_val = curr_timer_val;
   lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
-    printf("gyro: (%4.2f, %4.2f, %4.2f)\n", measure.x_axis, measure.y_axis, measure.z_axis);
-  if (measure.z_axis > 2.0 || measure.z_axis < -2.0) {
+    ///printf("gyro: (%4.2f, %4.2f, %4.2f)\n", measure.x_axis, measure.y_axis, measure.z_axis);
+  if (measure.z_axis > 0.5 || measure.z_axis < -0.5) {
     integrated_angle.z_axis += measure.z_axis*time_diff;
   }
-  if (measure.x_axis > 2.0 || measure.x_axis < -2.0) {
+  if (measure.x_axis > 0.5 || measure.x_axis < -0.5) {
     integrated_angle.x_axis += measure.x_axis*time_diff;
   }
-  if (measure.y_axis > 2.0 || measure.y_axis < -2.0) {
+  if (measure.y_axis > 0.5 || measure.y_axis < -0.5) {
     integrated_angle.y_axis += measure.y_axis*time_diff;
   }
   return integrated_angle;
@@ -548,7 +548,7 @@ lsm9ds1_measurement_t lsm9ds1_read_speed_integration() {
   float x = measure.x_axis - ex;
   float y = measure.y_axis - ey;
   float z = measure.z_axis - ez;
-    printf("Angle : (%4.2f, %4.2f, %4.2f)\n", angle.x_axis, angle.y_axis, angle.z_axis);
+    //printf("Angle : (%4.2f, %4.2f, %4.2f)\n", angle.x_axis, angle.y_axis, angle.z_axis);
     //printf("Fixed Accel: (%4.2f, %4.2f, %4.2f)\n", x, y, z);
   if (x > 0.1 || x < -0.1) {
     integrated_speed.x_axis += x*time_diff;

@@ -57,7 +57,11 @@ void read_IMU(float* data, int length)
 }
 void print_IMU(float* data, int length)
 {
-  printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
+  //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
+  for(int i = 0; i < 12; ++i) {
+      print("%4.2f ", data[i]);
+  }
+  print("%4.2f\n", data[12]);
   // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
   // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
   // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
@@ -65,22 +69,10 @@ void print_IMU(float* data, int length)
 
 void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
-    // printf("Motion Detected\n");
-    //read_IMU(IMU_data, NUM_IMU_DATA);
-    //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
     moved = true;
-    lsm9ds1_start_gyro_integration();
-    // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
 
 bool isStop(lsm9ds1_measurement_t data) {
-    /*if(fabs(data[0]) < 0.9 &&
-       fabs(data[1]) < 0.9 &&
-       fabs(data[2]) < 0.9 ) return true;;*/
-    if(data.x_axis == 0 && data.y_axis == 0 && data.z_axis == 0) return false;
-    if(fabs(data.x_axis) < 0.02 &&
-       fabs(data.y_axis) < 0.02 &&
-       fabs(data.z_axis) < 0.02 ) return true;
     return false;
 }
 
@@ -129,27 +121,18 @@ int main(void) {
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(100);
+    nrf_delay_ms(10);
     getAccelIntSrc();
-    //getGyroIntSrc();
-    //printf("%ld\n", getAccelIntSrc());
-    //print_IMU(IMU_data, NUM_IMU_DATA);
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
-        lsm9ds1_measurement_t speed = lsm9ds1_read_speed_integration();
-        //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
-        printf("Speed: %4.2f, %4.2f, %4.2f\n", speed.x_axis, speed.y_axis, speed.z_axis);
         counter++;
-        if(isStop(speed)) {
-            printf("Length of Data: %d\n", counter);
-
+        print_IMU(IMU_data);
+        /*if(isStop(speed)) {
             moved = false;
             counter = 0;
-            lsm9ds1_stop_gyro_integration();
-        }
+            printf("Length of Data: %d\n", counter);
+        }*/
     }
-    //printf("%ld\n", getGyroIntSrc());
-    // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
   }
 }
 
