@@ -74,9 +74,9 @@ void GPIOTE_IRQHandler(void) {
 }
 
 bool isStop(float* data) {
-    if(fabs(data[0]) < 16000 &&
-       fabs(data[1]) < 16000 &&
-       fabs(data[2]) < 16000) return true;;
+    if(fabs(data[0]) < 0.9 &&
+       fabs(data[1]) < 0.9 &&
+       fabs(data[2]) < 0.9 ) return true;;
     return false;
 }
 
