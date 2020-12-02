@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "nrf.h"
+#include "math.h"
 #include "app_util.h"
 #include "nrf_twi_mngr.h"
 #include "nrf_gpio.h"
@@ -50,6 +51,7 @@ static simple_ble_char_t letsgo_gyro_char = {.uuid16 = 0x108b};
 static simple_ble_char_t letsgo_magnet_char = {.uuid16 = 0x108c};
 static simple_ble_char_t letsgo_flex_char = {.uuid16 = 0x108d};
 static float IMU_data[NUM_IMU_DATA];
+static bool volatile moved = false;
 
 /*******************************************************************************
  *   State for this application
@@ -112,7 +114,7 @@ bool isStop(float* data) {
        fabs(data[2]) < 16000) return true;;
     return false;
 }
-bool moved = false;
+
 
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
