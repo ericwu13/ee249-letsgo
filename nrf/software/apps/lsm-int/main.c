@@ -92,14 +92,15 @@ void read_IMU(float* data, int length)
 void print_IMU(float* data, int length)
 {
   printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
-  printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
-  printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
-  printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
+  // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
+  // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
+  // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
 }
 
 void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
-    printf("Motion Detected\n");
+    // printf("Motion Detected\n");
+    printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
     // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
 
@@ -177,7 +178,7 @@ int main(void) {
     error_code = simple_ble_notify_char(&letsgo_magnet_char);
     error_code = simple_ble_notify_char(&letsgo_flex_char);
     APP_ERROR_CHECK(error_code);
-    print_IMU(IMU_data, NUM_IMU_DATA);
+    //print_IMU(IMU_data, NUM_IMU_DATA);
     //printf("%ld\n", getAccelIntSrc());
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
