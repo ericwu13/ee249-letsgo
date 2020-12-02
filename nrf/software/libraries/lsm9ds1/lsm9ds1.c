@@ -435,15 +435,15 @@ lsm9ds1_measurement_t lsm9ds1_read_accelerometer() {
   ax = (temp[1] << 8) | temp[0];
   ay = (temp[3] << 8) | temp[2];
   az = (temp[5] << 8) | temp[4];
-  if (autocalc) {
+  /*if (autocalc) {
     ax -= aBiasRaw[X_AXIS];
     ay -= aBiasRaw[Y_AXIS];
     az -= aBiasRaw[Z_AXIS];
-  }
+  }*/
 
-  meas.x_axis = ax * aRes;
-  meas.y_axis = ay * aRes;
-  meas.z_axis = az * aRes;
+  meas.x_axis = ax /** aRes*/;
+  meas.y_axis = ay /** aRes*/;
+  meas.z_axis = az /** aRes*/;
   return meas;
 }
 
@@ -597,17 +597,17 @@ void configAccelThs(uint8_t threshold, lsm9ds1_axis axis, uint8_t duration, bool
 
 
 ret_code_t lsm9ds1_intcfg() {
-  configGyroInt(ZHIE_G, false, false);
+  //configGyroInt(ZHIE_G, false, false);
   // 2. Configure the gyro threshold
   //   - 500: Threshold (raw value from gyro)
   //   - Z_AXIS: Z-axis threshold
   //   - 10: duration (based on ODR)
   //   - true: wait (wait duration before interrupt goes low)
-  configGyroThs(500, Z_AXIS, 10, true);
-  float ths = 500 - gBiasRaw[Z_AXIS];
+  //configGyroThs(500, Z_AXIS, 10, true);
+  //float ths = 500 - gBiasRaw[Z_AXIS];
 
-  ths = ths * gRes;
-  printf("Threadhold: %f\n", ths);
+  //ths = ths * gRes;
+  //printf("Threadhold: %f\n", ths);
   // 3. Configure accelerometer interrupt generator:
   //   - XHIE_XL: x-axis high event
   //     More axis events can be or'd together
@@ -620,7 +620,9 @@ ret_code_t lsm9ds1_intcfg() {
   //   - X_AXIS: Write to X-axis threshold
   //   - 10: duration (based on ODR)
   //   - false: wait (wait [duration] before interrupt goes low)
-  configAccelThs(20, X_AXIS, 1, false);
+  configAccelThs(128, X_AXIS, 10, false);
+  configAccelThs(128, Y_AXIS, 10, false);
+  configAccelThs(128, Z_AXIS, 10, false);
   // 5. Configure INT1 - assign it to gyro interrupt
   //   - XG_INT1: Says we're configuring INT1
   //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
@@ -629,7 +631,7 @@ ret_code_t lsm9ds1_intcfg() {
   //         (Can otherwise be set to INT_ACTIVE_HIGH.)
   //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
   //         (Can otherwise be set to INT_OPEN_DRAIN.)
-  configInt(XG_INT1, INT1_IG_G /*| INT_IG_XL*/, INT_ACTIVE_LOW, INT_PUSH_PULL);
+  configInt(XG_INT1, /*INT1_IG_G*/ INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
   return NRF_SUCCESS;
 }
 

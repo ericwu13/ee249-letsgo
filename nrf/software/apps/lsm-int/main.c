@@ -169,7 +169,7 @@ int main(void) {
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(100);
+    nrf_delay_ms(500);
     read_IMU(IMU_data, NUM_IMU_DATA);
     IMU_data[9] = (float)(counter++);
     error_code = simple_ble_notify_char(&letsgo_accel_char);
@@ -177,7 +177,7 @@ int main(void) {
     error_code = simple_ble_notify_char(&letsgo_magnet_char);
     error_code = simple_ble_notify_char(&letsgo_flex_char);
     APP_ERROR_CHECK(error_code);
-    // print_IMU(IMU_data, NUM_IMU_DATA);
+    print_IMU(IMU_data, NUM_IMU_DATA);
     //printf("%ld\n", getAccelIntSrc());
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
