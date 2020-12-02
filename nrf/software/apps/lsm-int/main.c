@@ -126,6 +126,7 @@ int main(void) {
   int counter = 0;
   while(1) {
     nrf_delay_ms(100);
+  getGyroIntSrc();
     //printf("%ld\n", getAccelIntSrc());
     //print_IMU(IMU_data, NUM_IMU_DATA);
     if(moved == true) {
