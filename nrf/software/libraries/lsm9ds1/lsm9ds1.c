@@ -613,6 +613,8 @@ ret_code_t lsm9ds1_intcfg() {
   //     More axis events can be or'd together
   //   - false: OR interrupts (N/A, since we only have 1)
   configAccelInt(XHIE_XL, false);
+  configAccelInt(YHIE_XL, false);
+  configAccelInt(ZHIE_XL, false);
   // 4. Configure accelerometer threshold:
   //   - 20: Threshold (raw value from accel)
   //     Multiply this value by 128 to get threshold value.
@@ -622,7 +624,7 @@ ret_code_t lsm9ds1_intcfg() {
   //   - false: wait (wait [duration] before interrupt goes low)
   configAccelThs(130, X_AXIS, 1, false);
   configAccelThs(125, Y_AXIS, 1, false);
-  configAccelThs(100, Z_AXIS, 1, false);
+  configAccelThs(125, Z_AXIS, 1, false);
   // 5. Configure INT1 - assign it to gyro interrupt
   //   - XG_INT1: Says we're configuring INT1
   //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
