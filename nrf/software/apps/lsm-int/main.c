@@ -147,7 +147,7 @@ int main(void) {
             counter = 0;
             lsm9ds1_stop_gyro_integration();
         }*/
-    }//
+    //}
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
   }
