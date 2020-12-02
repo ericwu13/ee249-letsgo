@@ -506,10 +506,6 @@ void lsm9ds1_stop_gyro_integration() {
   nrfx_timer_disable(&gyro_timer);
 }
 
-void lsm9ds1_stop_gyro_integration() {
-  nrfx_timer_disable(&gyro_timer);
-}
-
 lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   uint32_t curr_timer_val = nrfx_timer_capture(&gyro_timer, NRF_TIMER_CC_CHANNEL0);
   float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
