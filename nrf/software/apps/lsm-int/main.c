@@ -196,7 +196,7 @@ int main(void) {
         counter++;
         if(isStop(IMU_data)) {
             moved = false;
-            printf("Length of Data: %d", counter);
+            printf("Length of Data: %d\n", counter);
             counter = 0;
         }
     }
