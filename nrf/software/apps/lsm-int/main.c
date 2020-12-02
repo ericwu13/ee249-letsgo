@@ -184,7 +184,7 @@ int main(void) {
   while(1) {
     nrf_delay_ms(50);
     //getAccelIntSrc();
-    //printf("%ld\n", getAccelIntSrc());
+    printf("%ld\n", getAccelIntSrc());
     /*error_code = simple_ble_notify_char(&letsgo_accel_char);
     error_code = simple_ble_notify_char(&letsgo_gyro_char);
     error_code = simple_ble_notify_char(&letsgo_magnet_char);
