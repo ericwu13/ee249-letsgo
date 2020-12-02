@@ -196,8 +196,8 @@ int main(void) {
         counter++;
         if(isStop(IMU_data)) {
             moved = false;
-            counter = 0;
             printf("Length of Data: %d", counter);
+            counter = 0;
         }
     }
     //printf("%ld\n", getGyroIntSrc());
