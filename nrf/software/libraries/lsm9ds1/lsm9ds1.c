@@ -603,7 +603,7 @@ ret_code_t lsm9ds1_intcfg() {
   //   - Z_AXIS: Z-axis threshold
   //   - 10: duration (based on ODR)
   //   - true: wait (wait duration before interrupt goes low)
-  configGyroThs(500, Z_AXIS, 10, true);
+  //configGyroThs(500, Z_AXIS, 10, true);
   //float ths = 500 - gBiasRaw[Z_AXIS];
 
   //ths = ths * gRes;
