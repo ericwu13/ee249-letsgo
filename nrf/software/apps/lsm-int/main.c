@@ -124,7 +124,7 @@ int main(void) {
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(100);
+    nrf_delay_ms(10);
     getAccelIntSrc();
     //getGyroIntSrc();
     //printf("%ld\n", getAccelIntSrc());
