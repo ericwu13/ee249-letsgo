@@ -73,10 +73,13 @@ void GPIOTE_IRQHandler(void) {
     // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
 
-bool isStop(float* data) {
-    if(fabs(data[0]) < 0.9 &&
+bool isStop(lsm9ds1_measurement_t data) {
+    /*if(fabs(data[0]) < 0.9 &&
        fabs(data[1]) < 0.9 &&
-       fabs(data[2]) < 0.9 ) return true;;
+       fabs(data[2]) < 0.9 ) return true;;*/
+    if(fabs(data.x_axis) < 0.1 &&
+       fabs(data.y_axis) < 0.1 &&
+       fabs(data.z_axis) < 0.1 ) return true;
     return false;
 }
 
@@ -133,10 +136,10 @@ int main(void) {
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         lsm9ds1_measurement_t integrated_angle = lsm9ds1_read_gyro_integration();
-        printf("Speed: %4.2f, %4.2f, %4.2f\n", integrated_angle.x_axis, integrated_angle.y_axis, integrated_angle.z_axis);
         counter++;
-        if(isStop(IMU_data)) {
+        if(isStop(integrated_angle)) {
             printf("Length of Data: %d\n", counter);
+            printf("Speed: %4.2f, %4.2f, %4.2f\n", integrated_angle.x_axis, integrated_angle.y_axis, integrated_angle.z_axis);
 
             moved = false;
             counter = 0;
