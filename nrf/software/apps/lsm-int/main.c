@@ -135,10 +135,9 @@ int main(void) {
     //print_IMU(IMU_data, NUM_IMU_DATA);
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
-        lsm9ds1_measurement_t angle = lsm9ds1_read_gyro_integration();
         lsm9ds1_measurement_t speed = lsm9ds1_read_speed_integration();
         //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
-        //printf("Speed: %4.2f, %4.2f, %4.2f\n", speed.x_axis, speed.y_axis, speed.z_axis);
+        printf("Speed: %4.2f, %4.2f, %4.2f\n", speed.x_axis, speed.y_axis, speed.z_axis);
         counter++;
         /*if(isStop(integrated_angle)) {
             printf("Length of Data: %d\n", counter);
