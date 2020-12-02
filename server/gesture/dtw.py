@@ -1,6 +1,6 @@
 import numpy as np
 
-
+DEF_INFINITY = float("inf")
 ################################################# EXPEREIMENT FUNCTION, DONT USE
 def distanceCostFunction(s1, s2):
     return np.abs(s1-s2)
@@ -9,9 +9,6 @@ def DTW(signal1, signal2, costFuntion):
     #signal 1 is a temporal signal with length n
     #signal 2 is a temporal signal with length m
     #costFunction: compute distance function for two signal at time i and time j
-
-    DEF_INFINITY = float("inf")
-    
     n = signal1.shape[0]
     m = signal2.shape[0]
     d = DEF_INFINITY*np.ones((n+1, m+1))
@@ -91,6 +88,7 @@ class DTWManager():
         if signal2 is not None:
             if signal2.shape[1] != self.dim:
                 BaseException("Error, signal 1 and signal2 should have the same dimension as original signal")
+        else:
             self._incremental_dtw_oneside2(signal2)
 
         return self.d[self.n, self.m]
