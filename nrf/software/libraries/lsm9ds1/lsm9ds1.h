@@ -54,4 +54,5 @@ void lsm9ds1_stop_gyro_integration();
 //
 // Return the integrated value as floating point in degrees
 lsm9ds1_measurement_t lsm9ds1_read_gyro_integration();
+lsm9ds1_measurement_t lsm9ds1_read_speed_integration();
 
