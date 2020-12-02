@@ -69,7 +69,6 @@ void GPIOTE_IRQHandler(void) {
     //read_IMU(IMU_data, NUM_IMU_DATA);
     //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
     moved = true;
-    lsm9ds1_start_gyro_integration();
     // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Qusetion 2: why we don't have to set events_in back to handler
 }
 
@@ -127,13 +126,14 @@ int main(void) {
   */
 
   int counter = 0;
+  lsm9ds1_start_gyro_integration();
   while(1) {
     nrf_delay_ms(50);
     getAccelIntSrc();
     //getGyroIntSrc();
     //printf("%ld\n", getAccelIntSrc());
     //print_IMU(IMU_data, NUM_IMU_DATA);
-    if(moved == true) {
+    //if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         lsm9ds1_measurement_t speed = lsm9ds1_read_speed_integration();
         printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
@@ -147,7 +147,7 @@ int main(void) {
             counter = 0;
             lsm9ds1_stop_gyro_integration();
         }*/
-    }
+    }//
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
   }
