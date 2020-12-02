@@ -179,7 +179,7 @@ int main(void) {
     error_code = simple_ble_notify_char(&letsgo_flex_char);
     APP_ERROR_CHECK(error_code);
     //print_IMU(IMU_data, NUM_IMU_DATA);
-    //printf("%ld\n", getAccelIntSrc());
+    printf("%ld\n", getAccelIntSrc());
     //printf("%ld\n", getGyroIntSrc());
     // printf("Interrupt: %ld\n", nrf_gpio_pin_read(14));
   }
