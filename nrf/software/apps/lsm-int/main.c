@@ -29,27 +29,6 @@
 #include "kobukiUtilities.h"
 
 #define NUM_IMU_DATA 14
-// Intervals for advertising and connections
-static simple_ble_config_t ble_config = {
-        // c0:98:e5:49:xx:xx
-        .platform_id       = 0x49,    // used as 4th octect in device BLE address
-        .device_id         = 0x0000, // TODO: replace with your lab bench number
-        .adv_name          = "Let's Go", // used in advertisements if there is room
-        .adv_interval      = MSEC_TO_UNITS(1000, UNIT_0_625_MS),
-        .min_conn_interval = MSEC_TO_UNITS(500, UNIT_1_25_MS),
-        .max_conn_interval = MSEC_TO_UNITS(1000, UNIT_1_25_MS),
-};
-
-// 32e61089-2b22-4db5-a914-43ce41986c70
-static simple_ble_service_t letsgo_service = {{
-    .uuid128 = {0x70,0x6C,0x98,0x41,0xCE,0x43,0x14,0xA9,
-                0xB5,0x4D,0x22,0x2B,0x89,0x10,0xE6,0x32}
-}};
-
-static simple_ble_char_t letsgo_accel_char = {.uuid16 = 0x108a};
-static simple_ble_char_t letsgo_gyro_char = {.uuid16 = 0x108b};
-static simple_ble_char_t letsgo_magnet_char = {.uuid16 = 0x108c};
-static simple_ble_char_t letsgo_flex_char = {.uuid16 = 0x108d};
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 
@@ -57,22 +36,7 @@ static bool volatile moved = false;
  *   State for this application
  ******************************************************************************/
 // Main application state
-simple_ble_app_t* simple_ble_app;
 
-void ble_evt_write(ble_evt_t const* p_ble_evt) {
-    if (simple_ble_is_char_event(p_ble_evt, &letsgo_accel_char)) {
-      printf("Got write to Accel!\n");
-    }
-    if (simple_ble_is_char_event(p_ble_evt, &letsgo_gyro_char)) {
-      printf("Got write to Gyro!\n");
-    }
-    if (simple_ble_is_char_event(p_ble_evt, &letsgo_magnet_char)) {
-      printf("Got write to Magnet!\n");
-    }
-    if (simple_ble_is_char_event(p_ble_evt, &letsgo_flex_char)) {
-      printf("Got write to Flex!\n");
-    }
-}
 
 void read_IMU(float* data, int length)
 {
@@ -153,43 +117,16 @@ int main(void) {
   nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
 
 
-  // Setup BLE
-  simple_ble_app = simple_ble_init(&ble_config);
-
-  simple_ble_add_service(&letsgo_service);
-
   /*
   initialization of IMU & flexsensors
   initialization of the communication to the IMU & flexsors.
   */
 
-  simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 3, (uint8_t*)&(IMU_data[0]),
-       &letsgo_service, &letsgo_accel_char);
-
-  simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 3, (uint8_t*)&(IMU_data[3]),
-       &letsgo_service, &letsgo_gyro_char);
-
-  simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 3, (uint8_t*)&(IMU_data[6]),
-       &letsgo_service, &letsgo_magnet_char);
-  simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(float) * 5, (uint8_t*)&(IMU_data[9]),
-       &letsgo_service, &letsgo_flex_char);
-  // Start Advertising
-  simple_ble_adv_only_name();
-
   getAccelIntSrc();
   int counter = 0;
   while(1) {
-    nrf_delay_ms(50);
+    nrf_delay_ms(100);
     //printf("%ld\n", getAccelIntSrc());
-    /*error_code = simple_ble_notify_char(&letsgo_accel_char);
-    error_code = simple_ble_notify_char(&letsgo_gyro_char);
-    error_code = simple_ble_notify_char(&letsgo_magnet_char);
-    error_code = simple_ble_notify_char(&letsgo_flex_char);
-    APP_ERROR_CHECK(error_code);*/
     //print_IMU(IMU_data, NUM_IMU_DATA);
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
