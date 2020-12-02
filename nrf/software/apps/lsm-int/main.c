@@ -136,6 +136,7 @@ int main(void) {
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         lsm9ds1_measurement_t integrated_angle = lsm9ds1_read_gyro_integration();
+        printf("Accel: (%4.2f, %4.2f, %4.2f)\n", IMU_data[0], IMU_data[1], IMU_data[2]);
         printf("Speed: %4.2f, %4.2f, %4.2f\n", integrated_angle.x_axis, integrated_angle.y_axis, integrated_angle.z_axis);
         counter++;
         /*if(isStop(integrated_angle)) {
