@@ -547,13 +547,13 @@ lsm9ds1_measurement_t lsm9ds1_read_speed_integration() {
   float y = measure.y_axis - ey;
   float z = measure.z_axis - ez;
   if (x > 0.1 || x < -0.1) {
-    integrated_speed.x_axis += measure.x_axis*time_diff;
+    integrated_speed.x_axis += x*time_diff;
   }
   if (y > 0.1 || y < -0.1) {
-    integrated_speed.y_axis += measure.y_axis*time_diff;
+    integrated_speed.y_axis += y*time_diff;
   }
   if (z > 0.1 || z < -0.1) {
-    integrated_speed.z_axis += measure.z_axis*time_diff;
+    integrated_speed.z_axis += z*time_diff;
   }
   return integrated_speed;
 }
