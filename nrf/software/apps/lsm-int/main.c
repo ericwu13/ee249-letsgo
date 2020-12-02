@@ -170,7 +170,7 @@ int main(void) {
 
   int counter = 0;
   while(1) {
-    nrf_delay_ms(500);
+    nrf_delay_ms(100);
     read_IMU(IMU_data, NUM_IMU_DATA);
     IMU_data[9] = (float)(counter++);
     error_code = simple_ble_notify_char(&letsgo_accel_char);
