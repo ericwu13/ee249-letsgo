@@ -171,7 +171,7 @@ int main(void) {
   saadc_init();
   NRF_LOG_INFO("Application Started!!!");
   nrf_delay_ms(3000)
-  pritnf("start recording\n");
+  printf("start recording\n");
   /*
   initialization of IMU & flexsensors
   initialization of the communication to the IMU & flexsors.
