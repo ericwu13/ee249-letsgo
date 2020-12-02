@@ -28,7 +28,16 @@
 #include "kobukiSensorTypes.h"
 #include "kobukiUtilities.h"
 
-#define NUM_IMU_DATA 14
+#include <stdio.h>
+#include <string.h>
+#include "nrf_drv_saadc.h"
+#include "nrf_drv_ppi.h"
+#include "nrf_drv_timer.h"
+#include "boards.h"
+#include "app_error.h"
+#include "app_util_platform.h"
+
+#define NUM_IMU_DATA 13
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 
@@ -43,6 +52,14 @@ void read_IMU(float* data, int length)
     lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
     lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
     lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
+    nrf_saadc_value_t adc_val0;
+    nrf_saadc_value_t adc_val1;
+    nrf_saadc_value_t adc_val2;
+    nrf_saadc_value_t adc_val3;
+    nrfx_saadc_sample_convert(0, &adc_val0);
+    nrfx_saadc_sample_convert(1, &adc_val1);
+    nrfx_saadc_sample_convert(2, &adc_val2);
+    nrfx_saadc_sample_convert(3, &adc_val3);
     data[0] = accel_val.x_axis;
     data[1] = accel_val.y_axis;
     data[2] = accel_val.z_axis;
@@ -53,15 +70,19 @@ void read_IMU(float* data, int length)
     data[7] = magnet_val.y_axis;
     data[8] = magnet_val.z_axis;
     // TODO: read flex sensor
+    data[9] =  adc_val0 * 1.8 / 512;
+    data[10] = adc_val1 * 1.8 / 512;
+    data[11] = adc_val2 * 1.8 / 512;
+    data[12] = adc_val3 * 1.8 / 512;
     return;
 }
 void print_IMU(float* data, int length)
 {
   //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
   for(int i = 0; i < 12; ++i) {
-      print("%4.2f ", data[i]);
+      printf("%4.2f ", data[i]);
   }
-  print("%4.2f\n", data[12]);
+  printf("%4.2f\n", data[12]);
   // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
   // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
   // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
@@ -75,6 +96,39 @@ void GPIOTE_IRQHandler(void) {
 bool isStop(lsm9ds1_measurement_t data) {
     return false;
 }
+void saadc_callback_handler(nrf_drv_saadc_evt_t const * p_event){}
+void saadc_init(void)
+{
+  ret_code_t err_code;
+
+  nrf_saadc_channel_config_t channel_config0 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
+  nrf_saadc_channel_config_t channel_config1 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN1);
+  nrf_saadc_channel_config_t channel_config2 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN2);
+  nrf_saadc_channel_config_t channel_config3 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN3);
+  /* 
+  AIN0 P0.02
+  AIN1 P0.03
+  AIN2 P0.04
+  AIN3 P0.05
+  */
+  err_code = nrf_drv_saadc_init(NULL, saadc_callback_handler);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(0, &channel_config0);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(1, &channel_config1);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(2, &channel_config2);
+  APP_ERROR_CHECK(err_code);
+  err_code = nrfx_saadc_channel_init(3, &channel_config3);
+  APP_ERROR_CHECK(err_code);
+}
+
+void log_init(void)
+{
+  APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
+  NRF_LOG_DEFAULT_BACKENDS_INIT();
+}
+
 
 
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
@@ -113,6 +167,9 @@ int main(void) {
   NVIC_SetPriority (GPIOTE_IRQn , 0);
   nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
 
+  log_init();
+  saadc_init();
+  NRF_LOG_INFO("Application Started!!!");
 
   /*
   initialization of IMU & flexsensors
