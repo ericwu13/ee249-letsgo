@@ -603,7 +603,7 @@ ret_code_t lsm9ds1_intcfg() {
   //   - Z_AXIS: Z-axis threshold
   //   - 10: duration (based on ODR)
   //   - true: wait (wait duration before interrupt goes low)
-  //configGyroThs(500, Z_AXIS, 10, true);
+  configGyroThs(500, Z_AXIS, 10, true);
   //float ths = 500 - gBiasRaw[Z_AXIS];
 
   //ths = ths * gRes;
@@ -633,7 +633,7 @@ ret_code_t lsm9ds1_intcfg() {
   //         (Can otherwise be set to INT_ACTIVE_HIGH.)
   //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
   //         (Can otherwise be set to INT_OPEN_DRAIN.)
-  configInt(XG_INT1, INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
+  configInt(XG_INT1, INT1_IG_G | INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
   return NRF_SUCCESS;
 }
 
