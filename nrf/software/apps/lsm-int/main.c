@@ -183,7 +183,7 @@ int main(void) {
     if(moved == true) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         counter++;
-        print_IMU(IMU_data);
+        print_IMU(IMU_data, 13);
         /*if(isStop(speed)) {
             moved = false;
             counter = 0;
