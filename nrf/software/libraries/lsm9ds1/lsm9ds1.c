@@ -546,6 +546,7 @@ lsm9ds1_measurement_t lsm9ds1_read_speed_integration() {
   float x = measure.x_axis - ex;
   float y = measure.y_axis - ey;
   float z = measure.z_axis - ez;
+    printf("Angle : (%4.2f, %4.2f, %4.2f)\n", angle.x_axis, angle.y_axis, angle.z_axis);
     printf("Fixed Accel: (%4.2f, %4.2f, %4.2f)\n", x, y, z);
   if (x > 0.1 || x < -0.1) {
     integrated_speed.x_axis += x*time_diff;
