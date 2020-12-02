@@ -7,6 +7,7 @@
 #include "nrf_delay.h"
 #include "nrf_twi_mngr.h"
 #include "nrf_drv_timer.h"
+#include "math.h"
 
 #include "lsm9ds1.h"
 
@@ -22,6 +23,7 @@ static int16_t gBiasRaw[3], aBiasRaw[3], mBiasRaw[3];
 // rotation tracking variables
 static const nrf_drv_timer_t gyro_timer = NRFX_TIMER_INSTANCE(1);
 static lsm9ds1_measurement_t integrated_angle;
+static lsm9ds1_measurement_t integrated_speed;
 static uint32_t prev_timer_val;
 
 static void gyro_timer_event_handler(nrf_timer_event_t event_type, void* p_context) {
@@ -435,7 +437,7 @@ lsm9ds1_measurement_t lsm9ds1_read_accelerometer() {
   ax = (temp[1] << 8) | temp[0];
   ay = (temp[3] << 8) | temp[2];
   az = (temp[5] << 8) | temp[4];
-  if (autocalc) {
+ if (autocalc) {
     ax -= aBiasRaw[X_AXIS];
     ay -= aBiasRaw[Y_AXIS];
     az -= aBiasRaw[Z_AXIS];
@@ -495,6 +497,10 @@ ret_code_t lsm9ds1_start_gyro_integration() {
   integrated_angle.y_axis = 0;
   integrated_angle.x_axis = 0;
 
+  integrated_speed.z_axis = 0;
+  integrated_speed.y_axis = 0;
+  integrated_speed.x_axis = 0;
+
   nrfx_timer_clear(&gyro_timer);
   nrfx_timer_enable(&gyro_timer);
   prev_timer_val = 0;
@@ -506,22 +512,54 @@ void lsm9ds1_stop_gyro_integration() {
   nrfx_timer_disable(&gyro_timer);
 }
 
+void lsm9ds1_stop_gyro_integration() {
+  nrfx_timer_disable(&gyro_timer);
+}
+
 lsm9ds1_measurement_t lsm9ds1_read_gyro_integration() {
   uint32_t curr_timer_val = nrfx_timer_capture(&gyro_timer, NRF_TIMER_CC_CHANNEL0);
   float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
   prev_timer_val = curr_timer_val;
-  //lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
-  lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
-  if (measure.z_axis > 0.1 || measure.z_axis < -0.1) {
-    integrated_angle.z_axis += (measure.z_axis - 1) *time_diff;
+  lsm9ds1_measurement_t measure = lsm9ds1_read_gyro();
+  //lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
+  if (measure.z_axis > 0.5 || measure.z_axis < -0.5) {
+    integrated_angle.z_axis += measure.z_axis*time_diff;
   }
-  if (measure.x_axis > 0.1 || measure.x_axis < -0.1) {
+  if (measure.x_axis > 0.5 || measure.x_axis < -0.5) {
     integrated_angle.x_axis += measure.x_axis*time_diff;
   }
-  if (measure.y_axis > 0.1 || measure.y_axis < -0.1) {
+  if (measure.y_axis > 0.5 || measure.y_axis < -0.5) {
     integrated_angle.y_axis += measure.y_axis*time_diff;
   }
   return integrated_angle;
+}
+
+lsm9ds1_measurement_t lsm9ds1_read_speed_integration() {
+  uint32_t curr_timer_val = nrfx_timer_capture(&gyro_timer, NRF_TIMER_CC_CHANNEL0);
+  float time_diff = ((float)(curr_timer_val - prev_timer_val))/1000000.0;
+  prev_timer_val = curr_timer_val;
+  lsm9ds1_measurement_t angle = lsm9ds1_read_gyro_integration();
+  lsm9ds1_measurement_t measure = lsm9ds1_read_accelerometer();
+  float rad[3] = {angle.x_axis * M_PI / 180.0, angle.y_axis * M_PI / 180.0, angle.z_axis * M_PI / 180.0};
+  float a[2] = {cos(rad[2]), sin(rad[2])}; // 1 0
+  float b[2] = {cos(rad[1]), sin(rad[1])}; // 1 0
+  float r[2] = {cos(rad[0]), sin(rad[0])}; // 1 0
+  float ex = a[0]*b[1]*r[0] + a[1]*r[1]; // 001 + 10
+  float ey = a[1]*b[1]*r[0] - a[0]*r[1]; // 101 - 00
+  float ez = b[0] * r[0]; // 11
+  float x = measure.x_axis - ex;
+  float y = measure.y_axis - ey;
+  float z = measure.z_axis - ez;
+  if (x > 0.1 || x < -0.1) {
+    integrated_speed.x_axis += measure.x_axis*time_diff;
+  }
+  if (y > 0.1 || y < -0.1) {
+    integrated_speed.y_axis += measure.y_axis*time_diff;
+  }
+  if (z > 0.1 || z < -0.1) {
+    integrated_speed.z_axis += measure.z_axis*time_diff;
+  }
+  return integrated_speed;
 }
 
 // Interrupt Functions
@@ -634,7 +672,7 @@ ret_code_t lsm9ds1_intcfg() {
   //         (Can otherwise be set to INT_ACTIVE_HIGH.)
   //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
   //         (Can otherwise be set to INT_OPEN_DRAIN.)
-  configInt(XG_INT1, /*INT1_IG_G |*/ INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
+  configInt(XG_INT1, INT1_IG_G | INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
   return NRF_SUCCESS;
 }
 
