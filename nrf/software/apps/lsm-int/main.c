@@ -81,7 +81,7 @@ void TIMER4_IRQHandler (void) {
     //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
     NRF_TIMER4->CC[0] = 0;
     moved = false;
-    //NRF_GPIOTE->INTENSET |= (uint32_t) 1;
+    NVIC_EnableIRQ(GPIOTE_IRQn);
 }
 
 void timeout_timer_init() {
@@ -118,7 +118,8 @@ void interrupt_init(uint8_t pin) {
 
 // IRQ and Functions
 void GPIOTE_IRQHandler(void) {
-    NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
+    NVIC_DisableIRQ(GPIOTE_IRQn);
+    //NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     timer_start(3000000);
     moved = true;
