@@ -41,7 +41,6 @@
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
-static const nrf_drv_timer_t timeout_timer = NRFX_TIMER_INSTANCE(2);
 
 /*******************************************************************************
  *   State for this application
@@ -191,7 +190,7 @@ int main(void) {
     NRF_LOG_INFO("Interrupt Init");
     saadc_init();
     NRF_LOG_INFO("ADC Interface Init");
-    nrfx_timer_init(&gyro_timer, &timer_cfg, gyro_timer_event_handler);
+    timeout_timer_init();
     NRF_LOG_INFO("Timeout Timer Init");
 
     NVIC_SetPriority (GPIOTE_IRQn, 1);
