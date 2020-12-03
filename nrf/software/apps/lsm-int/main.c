@@ -92,7 +92,7 @@ void timeout_timer_init(void) {
 
 void timer_start(uint32_t timeout_microsecond) {
     NRF_TIMER4->TASKS_CLEAR = 1;
-    NRF_TIMER->CC[0] = timeout_microsecond 
+    NRF_TIMER->CC[0] = timeout_microsecond;
 }
 
 void interrupt_init(uint8_t pin) {
