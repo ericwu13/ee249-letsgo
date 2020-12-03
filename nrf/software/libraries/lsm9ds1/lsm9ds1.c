@@ -678,7 +678,7 @@ ret_code_t lsm9ds1_intcfg() {
   //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
   //         (Can otherwise be set to INT_OPEN_DRAIN.)
   configInt(XG_INT1, INT1_IG_G | INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
-  //configFIFO(FIFO_CONT);
+  configFIFO(FIFO_OFF);
   return NRF_SUCCESS;
 }
 
