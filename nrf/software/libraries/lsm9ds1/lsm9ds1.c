@@ -666,9 +666,9 @@ ret_code_t lsm9ds1_intcfg() {
   //   - X_AXIS: Write to X-axis threshold
   //   - 10: duration (based on ODR)
   //   - false: wait (wait [duration] before interrupt goes low)
-  configAccelThs(145, X_AXIS, 10, false);
-  configAccelThs(145, Y_AXIS, 10, false);
-  configAccelThs(145, Z_AXIS, 10, false);
+  configAccelThs(140, X_AXIS, 10, false);
+  configAccelThs(140, Y_AXIS, 10, false);
+  configAccelThs(140, Z_AXIS, 10, false);
   // 5. Configure INT1 - assign it to gyro interrupt
   //   - XG_INT1: Says we're configuring INT1
   //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
