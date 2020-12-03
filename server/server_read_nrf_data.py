@@ -7,17 +7,18 @@ import struct
 import paho.mqtt.client as paho
 import time
 
-
+# C0:98:E5:49:00:00
 class IMUData():
     def __init__(self):
         # 14 float numbers
         # 9 from IMU, 5 from flex sensor
-        self.data = [0]*3
+        self.data = [0]*100
     def unpack(self, data): 
-        for i in range(3):
+        #print(len(data))
+        for i in range(100):
             #print(data[(4*i):(4*i)+4])
             self.data[i] = struct.unpack('f', data[(4*i):(4*i)+4])[0]
-        print(self.data, flush = True)
+        print(self.data[0], flush = True)
 
 class LetsGoDelegate(DefaultDelegate):
     def __init__(self, params):
@@ -27,11 +28,12 @@ class LetsGoDelegate(DefaultDelegate):
         self.ch_pair = {}
 
     def handleNotification(self, cHandle, data):
-        print("Notification! %d %d", cHandle)
+        #print("Notification!", cHandle)
         #check cHandle
         if cHandle in self.ch_pair:
-            print(self.ch_pair[cHandle])
-            imu_data.unpack(data)
+            a = 0
+            #print(self.ch_pair[cHandle])
+            #imu_data.unpack(data)
         #ret = self.client.publish("command_1",data) 
         # ... process 'data'
 
@@ -64,8 +66,11 @@ LETSGO_GYRO_UUID    = "32e6108b-2b22-4db5-a914-43ce41986c70"
 LETSGO_MAGNET_UUID    = "32e6108c-2b22-4db5-a914-43ce41986c70"
 LETSGO_FLEX_UUID    = "32e6108d-2b22-4db5-a914-43ce41986c70"
 
-CH_UUIDs = [LETSGO_ACCEL_UUID, LETSGO_GYRO_UUID, LETSGO_MAGNET_UUID, LETSGO_FLEX_UUID]
-CH_NAME = ["accel", "gyro", "magnet", "flex"]
+# CH_UUIDs = [LETSGO_ACCEL_UUID, LETSGO_GYRO_UUID, LETSGO_MAGNET_UUID, LETSGO_FLEX_UUID]
+# CH_NAME = ["accel", "gyro", "magnet", "flex"]
+
+CH_UUIDs = [LETSGO_ACCEL_UUID]
+CH_NAME = ["accel"]
 try:
     print("connecting")
     buckler = Peripheral(addr)
@@ -95,8 +100,19 @@ try:
     #     display = input("Enter a message to write to the display:\n")
     #     ch.write(bytes(display, 'utf-8'))
     while True:
-        if buckler.waitForNotifications(10.0):
-            print("completated!")
+        if buckler.waitForNotifications(100.0):
+            a = 00
+            readbytes = chs[0].read()
+            imu_data.unpack(readbytes)
+            ##time.sleep(20)
+
+        # c = 0
+        # for i in range(1000):
+        #     time.sleep(0.05)
+        #     print(c*50, "ms")
+        #     c = c + 1
+        # if buckler.waitForNotifications(10.0):
+        #     print("completated!")
     # while True:
     #     # return type is "bytes"
     #     readbytes = ch.read()
