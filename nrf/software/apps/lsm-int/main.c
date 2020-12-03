@@ -207,11 +207,11 @@ int main(void) {
     NRF_LOG_INFO("Application Started!!!");
     //nrf_delay_ms(3000);
     //timer_start(3000000);
-    nrf_delay_ms(1000);
+    nrf_delay_ms(500);
     printf("start recording\n");
     int counter = 0;
     while(1) {
-        nrf_delay_ms(100);
+        nrf_delay_ms(10);
         getAccelIntSrc();
         read_IMU(IMU_data, NUM_IMU_DATA);
         if(moved == true) {
