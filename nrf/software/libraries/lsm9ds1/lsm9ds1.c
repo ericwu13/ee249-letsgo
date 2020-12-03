@@ -636,6 +636,7 @@ void configAccelThs(uint8_t threshold, lsm9ds1_axis axis, uint8_t duration, bool
 
 void configFIFO(uint8_t mode)
 {
+	i2c_reg_write(settings.device.agAddress, CTRL_REG9, 2);
 	i2c_reg_write(settings.device.agAddress, FIFO_CTRL, mode);
 }
 
@@ -666,9 +667,9 @@ ret_code_t lsm9ds1_intcfg() {
   //   - X_AXIS: Write to X-axis threshold
   //   - 10: duration (based on ODR)
   //   - false: wait (wait [duration] before interrupt goes low)
-  configAccelThs(140, X_AXIS, 9, false);
-  configAccelThs(140, Y_AXIS, 9, false);
-  configAccelThs(140, Z_AXIS, 9, false);
+  configAccelThs(140, X_AXIS, 7, false);
+  configAccelThs(140, Y_AXIS, 7, false);
+  configAccelThs(140, Z_AXIS, 7, false);
   // 5. Configure INT1 - assign it to gyro interrupt
   //   - XG_INT1: Says we're configuring INT1
   //   - INT1_IG_G | INT1_IG_XL: Sets interrupt source to 
@@ -678,7 +679,7 @@ ret_code_t lsm9ds1_intcfg() {
   //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
   //         (Can otherwise be set to INT_OPEN_DRAIN.)
   configInt(XG_INT1, /*INT1_IG_G | */INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
-  configFIFO(FIFO_OFF);
+  configFIFO(FIFO_CONT);
   return NRF_SUCCESS;
 }
 
