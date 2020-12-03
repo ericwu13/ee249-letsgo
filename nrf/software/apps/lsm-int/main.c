@@ -76,10 +76,15 @@ void saadc_init(void) {
     APP_ERROR_CHECK(err_code);
 }
 void TIMER4_IRQHandler (void) {
+    NRF_TIMER4->EVENTS_COMPARE[0] = 0;
     printf("time out!\n");
+    //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
+    NRF_TIMER4->CC[0] = 0;
+    moved = false;
+    NRF_GPIOTE->INTENSET |= (uint32_t) 1;
 }
 
-void timeout_timer_init(void) {
+void timeout_timer_init() {
     NRF_TIMER4->BITMODE |= 3;
     NRF_TIMER4->PRESCALER |= 4;
     NRF_TIMER4->TASKS_CLEAR |= 1;
@@ -92,7 +97,7 @@ void timeout_timer_init(void) {
 
 void timer_start(uint32_t timeout_microsecond) {
     NRF_TIMER4->TASKS_CLEAR = 1;
-    NRF_TIMER->CC[0] = timeout_microsecond;
+    NRF_TIMER4->CC[0] = timeout_microsecond;
 }
 
 void interrupt_init(uint8_t pin) {
@@ -114,11 +119,11 @@ void interrupt_init(uint8_t pin) {
 // IRQ and Functions
 void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
+    timer_start(1000000);
     moved = true;
+    NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
 }
 
-bool isStop(lsm9ds1_measurement_t data) {
-    return false;
 
 void read_IMU(float* data, int length)
 {
@@ -176,17 +181,17 @@ int main(void) {
     i2c_config.frequency = NRF_TWIM_FREQ_400K;
     ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
     APP_ERROR_CHECK(error_code);
-    //lsm9ds1_init(&twi_mngr_instance);
+    lsm9ds1_init(&twi_mngr_instance);
     printf("IMU initialized!\n");
-    //lsm9ds1_intcfg();
+    lsm9ds1_intcfg();
     printf("IMU Interrupt Init\n");
 
     // Setup LED GPIO
     nrf_gpio_cfg_output(BUCKLER_LED0);
 
     // set 14 to be interrupt
-    interrupt_init(14);
-    nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
+    interrupt_init(BUCKLER_IMU_INTERUPT);
+    nrf_gpio_cfg_input(BUCKLER_IMU_INTERUPT, NRF_GPIO_PIN_PULLUP);
     NRF_LOG_INFO("Interrupt Init");
     saadc_init();
     NRF_LOG_INFO("ADC Interface Init");
@@ -198,22 +203,18 @@ int main(void) {
 
     NRF_LOG_INFO("Application Started!!!");
     //nrf_delay_ms(3000);
+    //timer_start(3000000);
+    nrf_delay_ms(1000);
     printf("start recording\n");
-
-    timer_start(1000000);
     int counter = 0;
     while(1) {
-        nrf_delay_ms(10);
+        nrf_delay_ms(100);
         //getAccelIntSrc();
         if(moved == true) {
             read_IMU(IMU_data, NUM_IMU_DATA);
             counter++;
             print_IMU(IMU_data, 13);
-            /*if(isStop(speed)) {
-                moved = false;
-                counter = 0;
-                printf("Length of Data: %d\n", counter);
-            }*/
+            printf("Length of Data: %d\n", counter);
         }
     }
 }
