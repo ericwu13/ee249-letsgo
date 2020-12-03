@@ -190,8 +190,8 @@ int main(void) {
     nrf_gpio_cfg_output(BUCKLER_LED0);
 
     // set 14 to be interrupt
-    interrupt_init(BUCKLER_IMU_INTERUPT);
-    nrf_gpio_cfg_input(BUCKLER_IMU_INTERUPT, NRF_GPIO_PIN_PULLUP);
+    interrupt_init(14);
+    nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
     NRF_LOG_INFO("Interrupt Init");
     saadc_init();
     NRF_LOG_INFO("ADC Interface Init");
