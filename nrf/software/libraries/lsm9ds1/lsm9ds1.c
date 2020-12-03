@@ -634,6 +634,11 @@ void configAccelThs(uint8_t threshold, lsm9ds1_axis axis, uint8_t duration, bool
 	i2c_reg_write(settings.device.agAddress, INT_GEN_DUR_XL, temp);
 }
 
+void configFIFO(uint8_t mode)
+{
+	i2c_reg_write(settings.device.agAddress, FIFO_CTRL, mode);
+}
+
 
 ret_code_t lsm9ds1_intcfg() {
   //configGyroInt(ZHIE_G, false, false);
@@ -673,6 +678,7 @@ ret_code_t lsm9ds1_intcfg() {
   //   - INT_PUSH_PULL: Sets interrupt to a push-pull.
   //         (Can otherwise be set to INT_OPEN_DRAIN.)
   configInt(XG_INT1, INT1_IG_G | INT_IG_XL, INT_ACTIVE_LOW, INT_PUSH_PULL);
+  configFIFO(FIFO_CONT);
   return NRF_SUCCESS;
 }
 

@@ -40,12 +40,86 @@
 #define NUM_IMU_DATA 13
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
+NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
+static const nrf_drv_timer_t timeout_timer = NRFX_TIMER_INSTANCE(2);
 
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
-// Main application state
+// Initialization
+void log_init(void)
+{
+    APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
+    NRF_LOG_DEFAULT_BACKENDS_INIT();
+}
+void saadc_callback_handler(nrf_drv_saadc_evt_t const * p_event){}
+void saadc_init(void) {
+    ret_code_t err_code;
+    nrf_saadc_channel_config_t channel_config0 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
+    nrf_saadc_channel_config_t channel_config1 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN1);
+    nrf_saadc_channel_config_t channel_config2 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN2);
+    nrf_saadc_channel_config_t channel_config3 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN3);
+    /* 
+    AIN0 P0.02
+    AIN1 P0.03
+    AIN2 P0.04
+    AIN3 P0.05
+    */
+    err_code = nrf_drv_saadc_init(NULL, saadc_callback_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrfx_saadc_channel_init(0, &channel_config0);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrfx_saadc_channel_init(1, &channel_config1);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrfx_saadc_channel_init(2, &channel_config2);
+    APP_ERROR_CHECK(err_code);
+    err_code = nrfx_saadc_channel_init(3, &channel_config3);
+    APP_ERROR_CHECK(err_code);
+}
+void TIMER4_IRQHandler (void) {
+    printf("time out!\n");
+}
 
+void timeout_timer_init(void) {
+    NRF_TIMER4->BITMODE |= 3;
+    NRF_TIMER4->PRESCALER |= 4;
+    NRF_TIMER4->TASKS_CLEAR |= 1;
+    NRF_TIMER4->TASKS_START |= 1;
+    // Interrupt
+    NRF_TIMER4->INTENSET |= 1 << 16;
+    NVIC_EnableIRQ(TIMER4_IRQn);
+
+}
+
+void timer_start(uint32_t timeout_microsecond) {
+    NRF_TIMER4->TASKS_CLEAR = 1;
+    NRF_TIMER->CC[0] = timeout_microsecond 
+}
+
+void interrupt_init(uint8_t pin) {
+    // set 14 to be interrupt
+    NRF_GPIOTE->CONFIG[0] |= (uint32_t) 1;
+    NRF_GPIOTE->CONFIG[0] &= ~((uint32_t) 31 << 8);
+    NRF_GPIOTE->CONFIG[0] |= ((uint32_t) pin << 8);
+    // set HitoLo
+    NRF_GPIOTE->CONFIG[0] &= ~((uint32_t) 3 << 16);
+    NRF_GPIOTE->CONFIG[0] |= ((uint32_t) 2 << 16);
+
+    // enable IN[0]
+    NRF_GPIOTE->INTENSET |= (uint32_t) 1;
+    // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Question 1": why we have to set it
+    NVIC_EnableIRQ(GPIOTE_IRQn);
+}
+
+
+// IRQ and Functions
+void GPIOTE_IRQHandler(void) {
+    NRF_GPIOTE->EVENTS_IN[0] = 0;
+    moved = true;
+}
+
+bool isStop(lsm9ds1_measurement_t data) {
+    return false;
 
 void read_IMU(float* data, int length)
 {
@@ -78,119 +152,70 @@ void read_IMU(float* data, int length)
 }
 void print_IMU(float* data, int length)
 {
-  //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
-  for(int i = 0; i < 12; ++i) {
+    //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
+    for(int i = 0; i < 12; ++i) {
       printf("%4.2f ", data[i]);
-  }
-  printf("%4.2f\n", data[12]);
-  // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
-  // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
-  // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
-}
-
-void GPIOTE_IRQHandler(void) {
-    NRF_GPIOTE->EVENTS_IN[0] = 0;
-    moved = true;
-}
-
-bool isStop(lsm9ds1_measurement_t data) {
-    return false;
-}
-void saadc_callback_handler(nrf_drv_saadc_evt_t const * p_event){}
-void saadc_init(void)
-{
-  ret_code_t err_code;
-
-  nrf_saadc_channel_config_t channel_config0 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN0);
-  nrf_saadc_channel_config_t channel_config1 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN1);
-  nrf_saadc_channel_config_t channel_config2 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN2);
-  nrf_saadc_channel_config_t channel_config3 = NRFX_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_AIN3);
-  /* 
-  AIN0 P0.02
-  AIN1 P0.03
-  AIN2 P0.04
-  AIN3 P0.05
-  */
-  err_code = nrf_drv_saadc_init(NULL, saadc_callback_handler);
-  APP_ERROR_CHECK(err_code);
-  err_code = nrfx_saadc_channel_init(0, &channel_config0);
-  APP_ERROR_CHECK(err_code);
-  err_code = nrfx_saadc_channel_init(1, &channel_config1);
-  APP_ERROR_CHECK(err_code);
-  err_code = nrfx_saadc_channel_init(2, &channel_config2);
-  APP_ERROR_CHECK(err_code);
-  err_code = nrfx_saadc_channel_init(3, &channel_config3);
-  APP_ERROR_CHECK(err_code);
-}
-
-void log_init(void)
-{
-  APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
-  NRF_LOG_DEFAULT_BACKENDS_INIT();
+    }
+    printf("%4.2f\n", data[12]);
+    // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
+    // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
+    // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
 }
 
 
-
-NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
 
-  // Initialize
-  nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
-  i2c_config.scl = 27;
-  i2c_config.sda = 26;
-  i2c_config.frequency = NRF_TWIM_FREQ_400K;
-  ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
-  APP_ERROR_CHECK(error_code);
-  lsm9ds1_init(&twi_mngr_instance);
-  printf("IMU initialized!\n");
-  lsm9ds1_intcfg();
-  printf("IMU Interrupt Init\n");
+    /*
+    initialization of IMU & flexsensors
+    initialization of the communication to the IMU & flexsors.
+    */
+    log_init();
 
+    nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
+    i2c_config.scl = 27;
+    i2c_config.sda = 26;
+    i2c_config.frequency = NRF_TWIM_FREQ_400K;
+    ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
+    APP_ERROR_CHECK(error_code);
+    //lsm9ds1_init(&twi_mngr_instance);
+    printf("IMU initialized!\n");
+    //lsm9ds1_intcfg();
+    printf("IMU Interrupt Init\n");
 
-  // Setup LED GPIO
-  nrf_gpio_cfg_output(BUCKLER_LED0);
- 
+    // Setup LED GPIO
+    nrf_gpio_cfg_output(BUCKLER_LED0);
 
-  // set 14 to be interrupt
-  NRF_GPIOTE->CONFIG[0] |= (uint32_t) 1;
-  NRF_GPIOTE->CONFIG[0] &= ~((uint32_t) 31 << 8);
-  NRF_GPIOTE->CONFIG[0] |= ((uint32_t) 14 << 8);
+    // set 14 to be interrupt
+    interrupt_init(14);
+    nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
+    NRF_LOG_INFO("Interrupt Init");
+    saadc_init();
+    NRF_LOG_INFO("ADC Interface Init");
+    nrfx_timer_init(&gyro_timer, &timer_cfg, gyro_timer_event_handler);
+    NRF_LOG_INFO("Timeout Timer Init");
 
-  // set HitoLo
-  NRF_GPIOTE->CONFIG[0] &= ~((uint32_t) 3 << 16);
-  NRF_GPIOTE->CONFIG[0] |= ((uint32_t) 2 << 16);
+    NVIC_SetPriority (GPIOTE_IRQn, 1);
+    NVIC_SetPriority (TIMER4_IRQn, 0);
 
-  // enable IN[0]
-  NRF_GPIOTE->INTENSET |= (uint32_t) 1;
-  // NRF_GPIOTE->EVENTS_IN[0] = (uint32_t*) GPIOTE_IRQHandler; // Question 1": why we have to set it
-  NVIC_EnableIRQ(GPIOTE_IRQn);
-  NVIC_SetPriority (GPIOTE_IRQn , 0);
-  nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
+    NRF_LOG_INFO("Application Started!!!");
+    //nrf_delay_ms(3000);
+    printf("start recording\n");
 
-  log_init();
-  saadc_init();
-  NRF_LOG_INFO("Application Started!!!");
-  nrf_delay_ms(3000);
-  printf("start recording\n");
-  /*
-  initialization of IMU & flexsensors
-  initialization of the communication to the IMU & flexsors.
-  */
-
-  int counter = 0;
-  while(1) {
-    nrf_delay_ms(10);
-    getAccelIntSrc();
-    if(moved == true) {
-        read_IMU(IMU_data, NUM_IMU_DATA);
-        counter++;
-        print_IMU(IMU_data, 13);
-        /*if(isStop(speed)) {
-            moved = false;
-            counter = 0;
-            printf("Length of Data: %d\n", counter);
-        }*/
+    timer_start(1000000);
+    int counter = 0;
+    while(1) {
+        nrf_delay_ms(10);
+        //getAccelIntSrc();
+        if(moved == true) {
+            read_IMU(IMU_data, NUM_IMU_DATA);
+            counter++;
+            print_IMU(IMU_data, 13);
+            /*if(isStop(speed)) {
+                moved = false;
+                counter = 0;
+                printf("Length of Data: %d\n", counter);
+            }*/
+        }
     }
-  }
 }
 
