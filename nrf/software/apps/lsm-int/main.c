@@ -122,7 +122,7 @@ void GPIOTE_IRQHandler(void) {
     //NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
     printf("EVENT 0: %d", NRF_GPIOTE->EVENTS_IN[0]);
     NRF_GPIOTE->EVENTS_IN[0] = 0;
-    timer_start(500000);
+    timer_start(2000000);
     moved = true;
     NVIC_DisableIRQ(GPIOTE_IRQn);
 }
