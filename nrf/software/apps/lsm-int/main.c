@@ -118,10 +118,10 @@ void interrupt_init(uint8_t pin) {
 
 // IRQ and Functions
 void GPIOTE_IRQHandler(void) {
-    NRF_GPIOTE->EVENTS_IN[0] = 0;
-    timer_start(1000000);
-    moved = true;
     NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
+    NRF_GPIOTE->EVENTS_IN[0] = 0;
+    timer_start(3000000);
+    moved = true;
 }
 
 
