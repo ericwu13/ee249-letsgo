@@ -122,7 +122,7 @@ void GPIOTE_IRQHandler(void) {
     //NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
     printf("EVENT 0: %d", NRF_GPIOTE->EVENTS_IN[0]);
     NRF_GPIOTE->EVENTS_IN[0] = 0;
-    timer_start(3000000);
+    timer_start(500000);
     moved = true;
     NVIC_DisableIRQ(GPIOTE_IRQn);
 }
@@ -217,7 +217,7 @@ int main(void) {
         if(moved == true) {
             read_IMU(IMU_data, NUM_IMU_DATA);
             counter++;
-            print_IMU(IMU_data, 13);
+            //print_IMU(IMU_data, 13);
             printf("Length of Data: %d\n", counter);
         }
     }
