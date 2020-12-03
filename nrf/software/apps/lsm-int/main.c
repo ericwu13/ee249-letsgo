@@ -213,6 +213,7 @@ int main(void) {
     while(1) {
         nrf_delay_ms(100);
         getAccelIntSrc();
+        read_IMU(IMU_data, NUM_IMU_DATA);
         if(moved == true) {
             read_IMU(IMU_data, NUM_IMU_DATA);
             counter++;
