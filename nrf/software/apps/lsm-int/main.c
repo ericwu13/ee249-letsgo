@@ -81,6 +81,7 @@ void TIMER4_IRQHandler (void) {
     //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
     NRF_TIMER4->CC[0] = 0;
     moved = false;
+    NVIC_ClearPendingIRQ(GPIOTE_IRQn);
     NVIC_EnableIRQ(GPIOTE_IRQn);
 }
 
