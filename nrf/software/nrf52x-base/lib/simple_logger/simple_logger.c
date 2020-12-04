@@ -141,9 +141,9 @@ uint8_t simple_logger_init(const char *filename, const char *permissions) {
 static uint8_t logger_init() {
 
 	volatile FRESULT res = FR_OK;
-	printf("RES1: %d \n", res);
+
 	res |= f_mount(&simple_logger_fs, "", 1);
-	printf("RES2: %d \n", res);
+
 	// See if the file system already exists
 	while (res != FR_OK) {
 		switch (res) {
@@ -180,7 +180,7 @@ static uint8_t logger_init() {
 	// See if the file already exists
 	FIL temp;
 	res |= f_open(&temp,file, FA_READ | FA_OPEN_EXISTING);
-	printf("RES3: %d \n", res);
+
 	if(res == FR_NO_FILE) {
 		// The file doesn't exist
 		printf("file not exists\n");
@@ -195,18 +195,18 @@ static uint8_t logger_init() {
 	}
 
 	res |= f_open(&simple_logger_fpointer,file, simple_logger_opts);
-	printf("RES4: %d \n", res);
+
 
 	if(simple_logger_opts & FA_OPEN_ALWAYS) {
 		// We are in append mode and should move to the end
 		res |= f_lseek(&simple_logger_fpointer, f_size(&simple_logger_fpointer));
 	}
-	printf("RES5: %d \n", res);
+
 	if(header_written && !simple_logger_file_exists) {
 		f_puts(header_buffer, &simple_logger_fpointer);
 		res |= f_sync(&simple_logger_fpointer);
 	}
-	printf("RES6: %d \n", res);
+
 	simple_logger_inited = 1;
 	return res;
 }
