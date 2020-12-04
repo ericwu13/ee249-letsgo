@@ -2,6 +2,8 @@
 //
 // Creates a service for changing LED state over BLE
 
+#define EXTERNAL_IMU
+
 #include <stdbool.h>
 #include <stdint.h>
 #include "nrf.h"
@@ -179,12 +181,23 @@ int main(void) {
     log_init();
 
     nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
+    #ifdef EXTERNAL_IMU
     i2c_config.scl = 27;
     i2c_config.sda = 26;
+    #else
+    i2c_config.scl = BUCKLER_SENSORS_SCL;
+    i2c_config.sda = BUCKLER_SENSORS_SDA;
+    #endif
+    
     i2c_config.frequency = NRF_TWIM_FREQ_400K;
     ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
     APP_ERROR_CHECK(error_code);
+    #ifdef EXTERNAL_IMU
+    ext_lsm9ds1_init(&twi_mngr_instance);
+    #else
     lsm9ds1_init(&twi_mngr_instance);
+    #endif
+    
     printf("IMU initialized!\n");
     lsm9ds1_intcfg();
     printf("IMU Interrupt Init\n");
@@ -212,8 +225,8 @@ int main(void) {
     int counter = 0;
     while(1) {
         nrf_delay_ms(10);
-        //getAccelIntSrc();
-        read_IMU(IMU_data, NUM_IMU_DATA);
+        getAccelIntSrc();
+        //read_IMU(IMU_data, NUM_IMU_DATA);
         if(moved == true) {
             read_IMU(IMU_data, NUM_IMU_DATA);
             counter++;

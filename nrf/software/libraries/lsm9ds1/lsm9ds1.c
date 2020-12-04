@@ -296,11 +296,13 @@ void initMag() {
 }
 
 // initialization and configuration
+
 ret_code_t lsm9ds1_init(const nrf_twi_mngr_t* i2c) {
   // Set device settings, they are used in many other places
   settings.device.commInterface = IMU_MODE_I2C;
   settings.device.agAddress = BUCKLER_IMU_ACC_I2C_ADDR;
   settings.device.mAddress = BUCKLER_IMU_MAG_I2C_ADDR;
+ 
   settings.device.i2c = i2c;
 
   settings.gyro.enabled = true;
@@ -560,6 +562,142 @@ lsm9ds1_measurement_t lsm9ds1_read_speed_integration() {
     integrated_speed.z_axis += z*time_diff;
   }
   return integrated_speed;
+}
+
+
+
+ret_code_t ext_lsm9ds1_init(const nrf_twi_mngr_t* i2c) {
+  // Set device settings, they are used in many other places
+  settings.device.commInterface = IMU_MODE_I2C;
+  settings.device.agAddress = 0x6B;
+  settings.device.mAddress = 0x1E;
+ 
+  settings.device.i2c = i2c;
+
+  settings.gyro.enabled = true;
+  settings.gyro.enableX = true;
+  settings.gyro.enableY = true;
+  settings.gyro.enableZ = true;
+  // gyro scale can be 245, 500, or 2000
+  settings.gyro.scale = G_SCALE_245DPS;
+  // gyro sample rate: value between 1-6
+  // 1 = 14.9    4 = 238
+  // 2 = 59.5    5 = 476
+  // 3 = 119     6 = 952
+  settings.gyro.sampleRate = G_ODR_952;
+  // gyro cutoff frequency: value between 0-3
+  // Actual value of cutoff frequency depends
+  // on sample rate.
+  settings.gyro.bandwidth = 0;
+  settings.gyro.lowPowerEnable = false;
+  settings.gyro.HPFEnable = false;
+  // Gyro HPF cutoff frequency: value between 0-9
+  // Actual value depends on sample rate. Only applies
+  // if gyroHPFEnable is true.
+  settings.gyro.HPFCutoff = 0;
+  settings.gyro.flipX = false;
+  settings.gyro.flipY = false;
+  settings.gyro.flipZ = false;
+  settings.gyro.orientation = 0;
+  settings.gyro.latchInterrupt = true;
+
+  settings.accel.enabled = true;
+  settings.accel.enableX = true;
+  settings.accel.enableY = true;
+  settings.accel.enableZ = true;
+  // accel scale can be 2, 4, 8, or 16G
+  settings.accel.scale = A_SCALE_2G;
+  // accel sample rate can be 1-6
+  // 1 = 10 Hz    4 = 238 Hz
+  // 2 = 50 Hz    5 = 476 Hz
+  // 3 = 119 Hz   6 = 952 Hz
+  settings.accel.sampleRate = XL_ODR_952;
+  // Accel cutoff freqeuncy can be any value between -1 - 3.
+  // -1 = bandwidth determined by sample rate
+  // 0 = 408 Hz   2 = 105 Hz
+  // 1 = 211 Hz   3 = 50 Hz
+  settings.accel.bandwidth = -1;
+  settings.accel.highResEnable = false;
+  // accelHighResBandwidth can be any value between 0-3
+  // LP cutoff is set to a factor of sample rate
+  // 0 = ODR/50    2 = ODR/9
+  // 1 = ODR/100   3 = ODR/400
+  settings.accel.highResBandwidth = 0;
+
+  settings.mag.enabled = true;
+  // mag scale can be 4, 8, 12, or 16
+  settings.mag.scale = M_SCALE_4GS;
+  // mag data rate can be 0-7
+  // 0 = 0.625 Hz  4 = 10 Hz
+  // 1 = 1.25 Hz   5 = 20 Hz
+  // 2 = 2.5 Hz    6 = 40 Hz
+  // 3 = 5 Hz      7 = 80 Hz
+  settings.mag.sampleRate = M_ODR_80;
+  settings.mag.tempCompensationEnable = false;
+  // magPerformance can be any value between 0-3
+  // 0 = Low power mode      2 = high performance
+  // 1 = medium performance  3 = ultra-high performance
+  settings.mag.XYPerformance = 3;
+  settings.mag.ZPerformance = 3;
+  settings.mag.lowPowerEnable = false;
+  // magOperatingMode can be 0-2
+  // 0 = continuous conversion
+  // 1 = single-conversion
+  // 2 = power down
+  settings.mag.operatingMode = 0;
+
+  settings.temp.enabled = true;
+  for (int i=0; i<3; i++)
+  {
+    gBias[i] = 0;
+    aBias[i] = 0;
+    mBias[i] = 0;
+    gBiasRaw[i] = 0;
+    aBiasRaw[i] = 0;
+    mBiasRaw[i] = 0;
+  }
+  autocalc = false;
+
+  // initialize a timer for integrating gyro - the default frequency is 16MHz
+  nrf_drv_timer_config_t timer_cfg = {
+    .frequency          = NRF_TIMER_FREQ_1MHz,
+    .mode               = NRF_TIMER_MODE_TIMER,
+    .bit_width          = NRF_TIMER_BIT_WIDTH_32,
+    .interrupt_priority = NRFX_TIMER_DEFAULT_CONFIG_IRQ_PRIORITY,
+    .p_context          = NULL,
+  };
+  ret_code_t error_code = nrfx_timer_init(&gyro_timer, &timer_cfg, gyro_timer_event_handler);
+  APP_ERROR_CHECK(error_code);
+
+  // Using the ODR of each sensor, We can calculate the resolution
+  // That's what these functions are for. One for each sensor
+  calcgRes(); // Calculate DPS / ADC tick, stored in gRes variable
+  calcmRes(); // Calculate Gs / ADC tick, stored in mRes variable
+  calcaRes(); // Calculate g / ADC tick, stored in aRes variable
+
+  // software reset
+  //i2c_reg_write(settings.device.agAddress, CTRL_REG8, 0x5);
+  //nrf_delay_ms(50);
+
+  // To verify communication, we can read from the WHO_AM_I register of
+  // each device. Store those in a variable so we can return them.
+  uint8_t xgTest = lsm9ds1_whoami_ag();         // Read the accel/gyro WHO_AM_I
+  uint8_t mTest  = lsm9ds1_whoami_m();          // Read the mag WHO_AM_I
+  uint16_t whoAmICombined = (xgTest << 8) | mTest;
+
+  if (whoAmICombined != ((WHO_AM_I_AG_RSP << 8) | WHO_AM_I_M_RSP))
+    return -1;
+
+  // Gyro initialization stuff:
+  initGyro();    // This will "turn on" the gyro. Setting up interrupts, etc.
+
+  // Accelerometer initialization stuff:
+  initAccel(); // "Turn on" all axes of the accel. Set up interrupts, etc.
+
+  // Magnetometer initialization stuff:
+  initMag(); // "Turn on" all axes of the mag. Set up interrupts, etc.
+
+  return NRF_SUCCESS;
 }
 
 // Interrupt Functions
