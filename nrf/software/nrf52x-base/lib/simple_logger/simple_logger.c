@@ -141,6 +141,7 @@ uint8_t simple_logger_init(const char *filename, const char *permissions) {
 static uint8_t logger_init() {
 
 	volatile FRESULT res = FR_OK;
+
 	res |= f_mount(&simple_logger_fs, "", 1);
 
 	// See if the file system already exists
@@ -148,6 +149,7 @@ static uint8_t logger_init() {
 		switch (res) {
 			case FR_NOT_READY: {
 				// No disk found; check "Card Detected" signal before calling this function
+				printf("no disk found");
 				return res;
 			}
 			case FR_NO_FILESYSTEM: {
@@ -162,6 +164,7 @@ static uint8_t logger_init() {
 				// Retry mounting now
 				res = f_mount(&simple_logger_fs, "", 1);
 				if (res != FR_OK) {
+					printf("no file system");
 					return res;
 				}
 
@@ -179,18 +182,20 @@ static uint8_t logger_init() {
 	res |= f_open(&temp,file, FA_READ | FA_OPEN_EXISTING);
 
 	if(res == FR_NO_FILE) {
-
 		// The file doesn't exist
+		printf("file not exists\n");
 		simple_logger_file_exists = 0;
 
 	} else if(res == FR_OK) {
 
 		// The file does exist
+		printf("file exists\n");
 		simple_logger_file_exists = 1;
 		res |= f_close(&temp);
 	}
 
 	res |= f_open(&simple_logger_fpointer,file, simple_logger_opts);
+
 
 	if(simple_logger_opts & FA_OPEN_ALWAYS) {
 		// We are in append mode and should move to the end
@@ -307,5 +312,109 @@ uint8_t simple_logger_read(uint8_t* buf, uint8_t buf_len) {
 
 	return res;
 }
+////////////////////////////////////////////////////////
+uint8_t closefile()
+{
+	FRESULT res = f_close(&simple_logger_fpointer);
+	if(res != FR_OK) {
+		printf("ERROR: Failed reading from SD card: %i\n", res);
+		error();
+	}
+	return res;		
+}
+
+uint8_t moveptr_head()
+{
+	FRESULT res = f_lseek(&simple_logger_fpointer, 0);
+	if(res != FR_OK) {
+		printf("ERROR: Failed reading from SD card: %i\n", res);
+		error();
+	}
+	return res;	
+}
+
+uint32_t getfilesize()
+{
+	return f_size(&simple_logger_fpointer);
+}
+
+uint8_t readfile(uint8_t* buf, uint8_t buf_len)
+{
+    // Buffer should be cleared before calling this function
+	UINT read_len = 0;
+	uint8_t rres = READ_FILE_OK;
+
+	FRESULT res = f_read(&simple_logger_fpointer, (void*)buf, buf_len, &read_len);
+
+	if (read_len != buf_len) {
+		printf("WARNING: Should have read %i bytes, but only read %i\n", buf_len, read_len);
+		if(f_size(&simple_logger_fpointer) == f_tell(&simple_logger_fpointer))
+			printf("EOF!\n");
+		rres = READ_FILE_EOF;
+		if(res == FR_DENIED){
+			printf("File denied! \n");
+		}
+	}
+
+	if(res != FR_OK) {
+		printf("ERROR: Failed reading from SD card: %i\n", res);
+		error();
+		rres = READ_FILE_ERROR;
+	}
+
+	// File pointer must be at EOF again; should be correct
+
+	return rres;	
+}
+
+uint8_t readline(uint8_t* buf, uint8_t buf_len)
+{
+    // Buffer should be cleared before calling this function
+	uint8_t res = READ_FILE_OK;
+	const char* r_ptr = f_gets((void*)buf, buf_len, &simple_logger_fpointer);
+
+	if( r_ptr == NULL){
+		printf("ERROR: EOF of Error: %i\n", res);
+		error();
+		res = READ_FILE_EOF;
+	}
+	return res;
+	// File pointer must be at EOF again; should be correct
+}
+
+uint8_t openfile(const char* filename, const char *permissions){//utilize simple logger
+
+	if(!simple_logger_inited) {
+		// Initialize a timer
+		timer_init(heartbeat);
+		timer_start(1);
+	}
 
 
+	
+	file = filename;
+
+	// We must have not timed out and a card is available
+	if((permissions[0] != 'w'  && permissions[0] != 'a') ||
+	   (permissions[1] != '\0' && permissions[2] != 'r') ) {
+		// We didn't set the right permissions
+		return SIMPLE_LOGGER_BAD_PERMISSIONS;
+	}
+
+	// Set write/append permissions
+	if(permissions[0] == 'w') {
+		simple_logger_opts = (FA_WRITE | FA_CREATE_ALWAYS);
+	} else if (permissions[0] == 'a'){
+		simple_logger_opts = (FA_WRITE | FA_OPEN_ALWAYS);
+	} else {
+		return SIMPLE_LOGGER_BAD_PERMISSIONS;
+	}
+
+	// Set read permission
+	if (permissions[1] == ',' && permissions[2] == 'r') {
+		simple_logger_opts |= FA_READ;
+	}
+
+	uint8_t err_code = logger_init();
+	return  err_code;
+}
