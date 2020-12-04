@@ -41,6 +41,12 @@ enum {
 	SIMPLE_LOGGER_BAD_PERMISSIONS
 } SIMPLE_LOGGER_ERROR; 
 
+
+enum {
+	READ_FILE_OK = 0,
+	READ_FILE_EOF,
+	READ_FILE_ERROR
+}   READ_FILE_STATE;
 uint8_t simple_logger_init(const char *filename, const char *permissions);
 uint8_t simple_logger_ready(void);
 void simple_logger_update();
@@ -51,4 +57,13 @@ uint8_t simple_logger_log_header(const char *format, ...)
 		__attribute__ ((format (printf, 1, 2)));
 uint8_t simple_logger_read(uint8_t* buf, uint8_t buf_len);
 
+
+// Sheng-Jung added
+
+uint8_t openfile(const char* filename, const char *permissions);
+uint32_t getfilesize();
+uint8_t readfile(uint8_t* buf, uint8_t buf_len);
+uint8_t readline(uint8_t* buf, uint8_t buf_len);
+uint8_t moveptr_head();
+uint8_t closefile();
 #endif

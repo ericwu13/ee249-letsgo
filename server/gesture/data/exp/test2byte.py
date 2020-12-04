@@ -5,7 +5,7 @@ import struct
 fpath1 = sys.argv[1]
 fpath2 = sys.argv[2]
 
-label = 'F'
+label = b'f'#f
 threshold = 100
 length_c = 13 
 

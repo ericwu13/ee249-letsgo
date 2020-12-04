@@ -17,14 +17,16 @@
 
 #include "max44009.h"
 
-#include "nrf.h"
-#include "nrf_delay.h"
-#include "nrf_gpio.h"
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_drv_spi.h"
+#include "app_error.h"
+#include "nrf_sdh.h"
+#include "nrfx_gpiote.h"
+#include "nrf_serial.h"
+
 
 #include "buckler.h"
 #include "display.h"
@@ -33,6 +35,8 @@
 #include "kobukiSensorTypes.h"
 #include "kobukiUtilities.h"
 #include "lsm9ds1.h"
+
+#include "lib_gesture.h"
 
 #define NUM_IMU_DATA 100
 typedef float imu_data_type;
@@ -141,10 +145,24 @@ int main(void) {
   // Setup LED GPIO
   nrf_gpio_cfg_output(BUCKLER_LED0);
 
-  // Setup BLE
-  simple_ble_app = simple_ble_init(&ble_config);
+  /////code from sd_card
+  // Enable SoftDevice (used to get RTC running)
+
+  // // Initialize GPIO driver
+  if (!nrfx_gpiote_is_init()) {
+    error_code = nrfx_gpiote_init();
+  }
+  APP_ERROR_CHECK(error_code);
+
+  // //Setup library
+
+
+  //Setup BLE
+   simple_ble_app = simple_ble_init(&ble_config);
  
-  simple_ble_add_service(&letsgo_service);
+   simple_ble_add_service(&letsgo_service);
+
+   preload_library();
 
   /*
   initialization of IMU & flexsensors
