@@ -42,7 +42,7 @@ void DTWManager_print(DTWManager* dm){
 	#ifndef TEST_MATRIX_2D
 	nrf_delay_ms(200);
 	#endif
-	printf("Score: \n");
+	printf("Score Matrix: \n");
 	#ifndef TEST_MATRIX_2D
 	nrf_delay_ms(200);
 	#endif
@@ -65,17 +65,18 @@ void DTWManager_reset_score(DTWManager* dm){
 }
 
 float DTWManager_dtw(DTWManager* dm){
+	Matrix_data_type score = DTW_INF;
 	Matrix_2d* d = &(dm->d);
 	int n_max = dm->signal1->nrow;
 	int m_max = dm->signal2->nrow;
 
 	if(matrix_2d_isInit(d)){
 		#ifdef INCREMENTAL_SUPPORT
-		DTWManager_incremental_dtw(dm);
+		score = DTWManager_incremental_dtw(dm);
 		#else
 		printf("Error! Score exists! Please reset score in advance!\n");
 		#endif
-		return DTW_INF;
+		return score;
 	}
 	else{
 		#ifdef INCREMENTAL_SUPPORT
@@ -114,11 +115,11 @@ float DTWManager_dtw(DTWManager* dm){
 							+ min_of_three( match, del, insert);
 		}
 	}
-	Matrix_data_type score = d->dptr[n_max-1][m_max-1];
+	score = d->dptr[n_max-1][m_max-1];
 	DTWManager_print(dm);
 	#ifndef INCREMENTAL_SUPPORT
 	DTWManager_reset_score(dm);
 	#endif
-	DTWManager_print(dm);
+	//DTWManager_print(dm);
 	return score;
 }
