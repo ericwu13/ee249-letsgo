@@ -9,7 +9,6 @@
 #include <math.h>
 #include <stdbool.h>
 
-#define DTW_INFINITY FLT_MAX 
 #define Matrix_data_type float
 
 #ifdef TEST_MATRIX_2D
@@ -46,4 +45,5 @@ uint8_t matrix_2d_init(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 
 uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode, Matrix_data_type con);
 
+void matrix_2d_reset_constant(Matrix_2d* m, Matrix_data_type con);
 #endif
