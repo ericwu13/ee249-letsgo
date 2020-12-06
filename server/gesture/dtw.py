@@ -43,7 +43,7 @@ class DTWManager():
         for i in range(1,self.n+1):
             for j in range(1,self.m+1):
                 self.d[i, j] = self.costFunction(self.signal1[i-1], self.signal2[j-1]) + self.get_prev_min(i, j)
-        #print(self.d, self.d.shape)
+        print(self.d, self.d.shape)
         return self.d[self.n, self.m]
 
     def _incremental_dtw_oneside1(self, signal1):
@@ -89,7 +89,7 @@ class DTWManager():
             if signal2.shape[1] != self.dim:
                 BaseException("Error, signal 1 and signal2 should have the same dimension as original signal")
             self._incremental_dtw_oneside2(signal2)
-
+        print(self.d, self.d.shape)
         return self.d[self.n, self.m]
 
 
@@ -99,6 +99,7 @@ if __name__ == "__main__":
     np.set_printoptions(suppress=True)
     m = DTWManager(np.array([1,1,2,2,2,7,2,3,4,5]).reshape(-1, 1 ), np.array([1,2,3,4,5]).reshape(-1, 1), distanceCostFunction)
     a = m.perform_dtw()
+    print(a)
     a = m.incremental_dtw(np.array([5,5]).reshape(-1, 1), np.array([5,5]).reshape(-1, 1))
     print(a)
     a = m.incremental_dtw(np.array([5,5]).reshape(-1, 1), np.array([5,6]).reshape(-1, 1))

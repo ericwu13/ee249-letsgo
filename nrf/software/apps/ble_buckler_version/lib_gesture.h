@@ -27,21 +27,24 @@ typedef struct candidate {
 
 typedef struct library {
 	Candidate* c_array;
+	Matrix_2d signal;
+	DTW_Manager dm;
 } Library;
 
 Library lib_gesture;
 
-uint8_t 	preload_library();
-uint8_t 	library_init(Library* lib, int size);
-uint8_t 	readLibFile(Candidate* cand, const char* filename);
 
 void	 	candidate_init(Candidate* cand,int nrow, int ncol, label_t label, float threshold);
-
-void 		library_delete(Library* lib);
-
-void    	library_debug(Library* lib);
 void 		candidate_debug(Candidate* cand);
+uint8_t 	readLibFile(Candidate* cand, const char* filename);
 
+uint8_t 	preload_library();
 
+uint8_t 	library_init(Library* lib, int size);
+void 		library_delete(Library* lib);
+void    	library_debug(Library* lib);
+void 		library_push_signal(Library* lib, Matrix_data_type* datapoint);
+label_t 	library_recognition(Library* lib);
+void  		library_reset_signal(Library* lib);
 
 #endif

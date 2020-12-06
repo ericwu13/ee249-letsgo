@@ -31,6 +31,7 @@ uint8_t preload_library()
 
 uint8_t library_init(Library* lib, int size){
 	lib->c_array = (Candidate*) calloc(size, sizeof(Candidate));
+	matrix_2d_init(&(lib->signal), 0, 0, INIT_MODE_NOT_INITIALIZE, NULL, false);
 	if(lib->c_array == NULL){
 		printf("Library initialize error!\n");
 		return -1;
@@ -39,7 +40,14 @@ uint8_t library_init(Library* lib, int size){
 }
 
 void library_delete(Library* lib){
+	for(int i = 0; i < LIBRARY_SIZE; i++){
+		Matrix_2d* libmat = &(lib->c_array[i].data);
+		if(matrix_2d_isInit(libmat))
+			matrix_2d_delete(libmat);
+	}
 	free(lib->c_array);
+	if(matrix_2d_isInit(&(lib->signal)))
+		matrix_2d_delete(&(lib->signal));
 }
 
 uint8_t readLibFile(Candidate* cand, const char* filename){
@@ -117,6 +125,9 @@ void library_debug(Library* lib){
 		printf("\n");
 		nrf_delay_ms(100);
 	}
+	printf("Singal info:\n");
+	nrf_delay_ms(100);
+	matrix_2d_print(&(lib->signal));
 }
 
 void candidate_debug(Candidate* cand){
@@ -125,4 +136,33 @@ void candidate_debug(Candidate* cand){
 	nrf_delay_ms(100);
 	printf("threshold: %f ", cand->threshold);
 	matrix_2d_print(&(cand->data));
+}
+
+void 	library_push_signal(Library* lib, Matrix_data_type* datapoint){
+
+	matrix_2d* signal = &(lib->signal);
+	if(!matrix_2d_isInit(signal)){
+      matrix_2d_init(signal, 1, NUM_IMU_DATA, INIT_MODE_CONTANT, 0, NULL, false);
+    }
+    else{
+      matrix_2d_resize(signal, signal->nrow + 1, NUM_IMU_DATA, INIT_MODE_CONTANT, 0);
+    }
+    memcpy(signal.dtpr[signal.nrow - 1], datapoint, NUM_IMU_DATA*sizeof(Matrix_data_type))
+}
+
+label_t library_recognition(Library* lib){
+	float score;
+	for(int i = 0; i < LIBRARY_SIZE; i++){
+		//
+		Candidate* cand = &(lib->c_array[i]);
+		DTWManager_init(&(lib->dm), NUM_IMU_DATA,  &signal, &(cand->data), &euclidean_score);
+		score = DTWManager_dtw(&(lib->dm));
+		if(score > cand->threshold){
+			return cand->label;
+		}
+	}
+	return 0;//no result;
+}
+void  	library_reset_signal(Library* lib){
+	matrix_2d_resize(&(lib->signal), 0, NUM_IMU_DATA, INIT_MODE_CONTANT, 0);
 }

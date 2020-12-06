@@ -116,7 +116,7 @@ float DTWManager_dtw(DTWManager* dm){
 		}
 	}
 	score = d->dptr[n_max-1][m_max-1];
-	DTWManager_print(dm);
+	//DTWManager_print(dm);
 	#ifndef INCREMENTAL_SUPPORT
 	DTWManager_reset_score(dm);
 	#endif

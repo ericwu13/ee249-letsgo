@@ -1,5 +1,7 @@
 #include "matrix_2d.h"
+#ifndef TEST_MATRIX_2D
 #include "nrf_delay.h"
+#endif 
 /***************************************
 
 
@@ -66,7 +68,7 @@ bool matrix_2d_isEmpty(Matrix_2d* m)
 	if(!matrix_2d_isInit(m))
 		return true;
 	else
-		return m->nrow | m->ncol;
+		return !(m->nrow | m->ncol);
 }
 
 bool matrix_2d_isInit(Matrix_2d* m)
@@ -108,6 +110,14 @@ r:       the rth number in cm to be copied
 uint8_t matrix_2d_init(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode, Matrix_data_type con, Matrix_2d* cm, bool realsize)
 {
 	//init row
+	if(nrow == 0 || ncol == 0){
+		m->dptr = NULL;
+		m->ncol = 0;
+		m->nrow = 0;
+		m->row_size = 0;
+		m->col_size = 0;
+		return 0;
+	}
 	size_t row_size = nrow;
 	size_t col_size = ncol;
 	if(!realsize){
@@ -159,21 +169,25 @@ uint8_t matrix_2d_init(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode, M
 void matrix_2d_print(Matrix_2d* m){
 
 	if(!matrix_2d_isInit(m)){
-		printf("Uninitialized Matrix");
+		printf("Uninitialized Matrix\n");
 		return;
 	}
 
 	printf("Dim = (%d, %d), Max_Size = (%d, %d)\n", m->nrow, m->ncol, m->row_size, m->col_size);
+	#ifndef TEST_MATRIX_2D
 	nrf_delay_ms(200);
+	#endif
 	printf("[");
 	for(int r = 0; r < (int)(m->nrow); r++){
-		printf("[");
+		r == 0 ? printf("[") : printf(" [");
 		for(int c = 0; c < (int)(m->ncol); c++){
-			printf("%5.2f ", m->dptr[r][c]);
+			printf("%7.2f ", m->dptr[r][c]);
 		}
 		if(r + 1 == (int)(m->nrow)) printf("]");
 		else printf("],\n");
+		#ifndef TEST_MATRIX_2D
 		nrf_delay_ms(200);
+		#endif
 	}
 	printf("]\n");
 }
@@ -272,6 +286,11 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 	else{// can inplace!
 
 		Matrix_data_type** ptr = m->dptr;
+		if(nrow <= (int)(m->nrow) && ncol <= (int)(m->ncol)){//just change nrow, ncol
+			m->ncol = ncol;
+			m->nrow = nrow;
+			return 0;
+		}
 
 		for(int r = 0; r < (int)(m->nrow); r++){
 			init_row(ptr[r], m->ncol, ncol, INIT_MODE_CONSTANT, con);
@@ -302,3 +321,8 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 	return 0;
 }
 
+void matrix_2d_reset_constant(Matrix_2d* m, Matrix_data_type con){
+	for(int r = 0; r < (int)(m->nrow); r++){
+		init_row(m->dptr[r], 0, m->ncol, INIT_MODE_CONSTANT, con);
+	}
+}

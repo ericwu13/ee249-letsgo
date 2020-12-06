@@ -68,7 +68,7 @@ bool matrix_2d_isEmpty(Matrix_2d* m)
 	if(!matrix_2d_isInit(m))
 		return true;
 	else
-		return m->nrow | m->ncol;
+		return !(m->nrow | m->ncol);
 }
 
 bool matrix_2d_isInit(Matrix_2d* m)
@@ -179,7 +179,7 @@ void matrix_2d_print(Matrix_2d* m){
 	#endif
 	printf("[");
 	for(int r = 0; r < (int)(m->nrow); r++){
-		printf("[");
+		r == 0 ? printf("[") : printf(" [");
 		for(int c = 0; c < (int)(m->ncol); c++){
 			printf("%5.2f ", m->dptr[r][c]);
 		}
@@ -317,7 +317,7 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 }
 
 void matrix_2d_reset_constant(Matrix_2d* m, Matrix_data_type con){
-	for(int r = 0; r < m->nrow; r++){
+	for(int r = 0; r < (int)(m->nrow); r++){
 		init_row(m->dptr[r], 0, m->ncol, INIT_MODE_CONSTANT, con);
 	}
 }

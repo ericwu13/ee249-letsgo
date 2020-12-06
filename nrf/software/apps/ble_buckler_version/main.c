@@ -37,8 +37,9 @@
 #include "lsm9ds1.h"
 
 #include "lib_gesture.h"
+#include "dtw.h"
 
-#define NUM_IMU_DATA 100
+#define NUM_IMU_DATA 13
 typedef float imu_data_type;
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
@@ -186,10 +187,23 @@ int main(void) {
   // Start Advertising
   simple_ble_adv_only_name();
 
+  Matrix_2d signal;
+  matrix_2d_init(&signal, 0, 0, INIT_MODE_CONTANT, 0, NULL, false);
+
+  
+
   int counter = 0;
   while(1) {
-
     read_IMU(IMU_data, NUM_IMU_DATA);
+    //signal push
+
+    //dtw
+    //library_recognition();
+    DTW_Manager dm;
+    DTW_Manager_init(&dm, );
+    float score;
+
+    
 
     IMU_data[0] = (float)(counter++);
 
