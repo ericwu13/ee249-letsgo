@@ -4,9 +4,7 @@
 #endif
 
 
-static inline float min_of_three(Matrix_data_type a, Matrix_data_type b, Matrix_data_type c){
-	return fminf(a, fminf(b, c));
-}
+
 
 float euclidean_score(Matrix_data_type* dp1, Matrix_data_type* dp2, int dim){
 	Matrix_data_type score = 0;
@@ -60,15 +58,17 @@ void DTWManager_init(DTWManager* dm, int dim, Signal* signal1, Signal* signal2, 
 
 void DTWManager_reset_score(DTWManager* dm){
 	if(matrix_2d_isInit(&(dm->d))){
+		printf("Reset score!\n");
 		matrix_2d_delete(&(dm->d));
 	}
 }
 
-float DTWManager_dtw(DTWManager* dm){
+float DTWManager_dtw(DTWManager* dm, int n_max, int m_max){
 	Matrix_data_type score = DTW_INF;
 	Matrix_2d* d = &(dm->d);
-	int n_max = dm->signal1->nrow;
-	int m_max = dm->signal2->nrow;
+	printf("size: %d, %d\n", n_max, m_max);
+	//int n_max = dm->signal1->nrow;
+	//int m_max = dm->signal2->nrow;
 
 	if(matrix_2d_isInit(d)){
 		#ifdef INCREMENTAL_SUPPORT
@@ -79,12 +79,14 @@ float DTWManager_dtw(DTWManager* dm){
 		return score;
 	}
 	else{
+		printf("Construct score matrix...\n");
 		#ifdef INCREMENTAL_SUPPORT
-		matrix_2d_init(d, n_max, m_max, INIT_MODE_CONSTANT, DTW_INF, NULL, false);
+		matrix_2d_init(d, n_max, m_max, INIT_MODE_CONSTANT, 5, NULL, false);
 		#else
-		matrix_2d_init(d, n_max, m_max, INIT_MODE_CONSTANT, DTW_INF, NULL, true);
+		matrix_2d_init(d, n_max, m_max, INIT_MODE_CONSTANT, 5, NULL, true);
 		#endif		
 	}
+	matrix_2d_print(d);
 
 
 	for (int n = 0; n < n_max; n++){

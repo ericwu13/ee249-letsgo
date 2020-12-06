@@ -10,6 +10,10 @@
 #include "simple_logger.h"
 #include "matrix_2d.h"
 #include "nrf_delay.h"
+#include "dtw.h"
+
+#define NUM_IMU_DATA 13
+#define MAX_SIGNAL_LENGTH 20
 
 #define label_t char
 #define label_size sizeof(label_t)
@@ -28,7 +32,8 @@ typedef struct candidate {
 typedef struct library {
 	Candidate* c_array;
 	Matrix_2d signal;
-	DTW_Manager dm;
+	DTWManager dm;
+	size_t signal_length;
 } Library;
 
 Library lib_gesture;
@@ -38,7 +43,7 @@ void	 	candidate_init(Candidate* cand,int nrow, int ncol, label_t label, float t
 void 		candidate_debug(Candidate* cand);
 uint8_t 	readLibFile(Candidate* cand, const char* filename);
 
-uint8_t 	preload_library();
+Library* 	preload_library();
 
 uint8_t 	library_init(Library* lib, int size);
 void 		library_delete(Library* lib);

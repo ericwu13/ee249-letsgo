@@ -37,7 +37,7 @@ typedef struct dtwmanager
 
 void DTWManager_print(DTWManager* dm);
 void DTWManager_init(DTWManager* dm, int dim, Signal* signal1, Signal* signal2, Matrix_data_type (*costFunction) (Matrix_data_type*, Matrix_data_type*, int));
-float DTWManager_dtw(DTWManager* dm);
+float DTWManager_dtw(DTWManager* dm, int n_max, int m_max);
 void DTWManager_resetScore(DTWManager* dm);
 #ifdef INCREMENTAL_SUPPORT
 float DTWManager_incremental_dtw(DTWManager* dm, Signal* signal1, Signal* signal2);

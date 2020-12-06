@@ -92,8 +92,12 @@ bool matrix_2d_getDim(Matrix_2d* m, size_t* nrow, size_t* ncol)
 void matrix_2d_delete(Matrix_2d* m){
 	for(int r = 0; r < (int)(m->row_size); r++)
 	{
-		free(m->dptr[r]);
+		if(m->dptr[r] != NULL){
+			printf("*");
+			free(m->dptr[r]);
+		}
 	}
+	printf("\n");
 	free(m->dptr);
 	m->dptr = NULL;
 	m->row_size = m->col_size = m->nrow = m->ncol = 0;	
@@ -129,6 +133,7 @@ uint8_t matrix_2d_init(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode, M
 
 	if(ptr == NULL){
 		printf("matrix memory allocation error!\n");
+		nrf_delay_ms(500);
 		return -1;
 	}
 
@@ -137,6 +142,7 @@ uint8_t matrix_2d_init(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode, M
 		ptr[r] = (Matrix_data_type*) calloc(col_size, sizeof(Matrix_data_type));
 		if(ptr[r] == NULL){
 			printf("matrix memory allocation error!\n");
+			nrf_delay_ms(500);
 			// free previously allocated memory
 			for(int j = r-1; j >= 0; j--)
 			{
@@ -194,7 +200,7 @@ void matrix_2d_print(Matrix_2d* m){
 
 uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode, Matrix_data_type con)
 {
-	if(mode != INIT_MODE_CONSTANT){
+	if(mode == INIT_MODE_COPY_CONSTANT || mode == INIT_MODE_COPY){
 		printf("resize does not support copy!");
 		return -1;
 	}
@@ -210,6 +216,7 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 	//size_t col_size = get_array_memory_size(ncol);
 
 	if(/*nrow > m->row_size && */ncol > m->col_size){// both axis exceed original size, complete useless 
+		printf("update whole matrix!\n");
 		Matrix_2d m_new;
 		matrix_2d_init(&m_new, nrow, ncol, INIT_MODE_COPY_CONSTANT, con, m, false);
 		matrix_2d_delete(m);
@@ -217,6 +224,7 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 		return 0;
 	}
 	else if(nrow > m->row_size){// column usable
+		printf("Column usable!\n");
 		//col_size won't change
 		//m->row_size increase to row_size 
 		Matrix_data_type** ptr = (Matrix_data_type**) calloc(row_size, sizeof(Matrix_data_type*));
@@ -225,17 +233,24 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 			return -1;
 		}
 		//copy old data
+		printf("Check...%d copied\n", m->nrow);
 		memcpy((void*) ptr, (void*) m->dptr, sizeof(Matrix_data_type*) * m->nrow);
 		//pad old dada
 		for(int r = 0; r < (int)(m->nrow); r++){
+			printf("Check...%d to %d copied\n", m->ncol, ncol);
 			init_row(ptr[r], m->ncol, ncol, INIT_MODE_CONSTANT, con);
 		}
 		// create new row
 		for(int r = m->nrow; r < (int)(nrow); r++)
 		{
-			ptr[r] = (Matrix_data_type*) calloc(m->col_size, sizeof(Matrix_data_type));
+			printf("Check...col size: %d\n", m->col_size);
+			if(ptr[r] == NULL){
+				printf("NULL pointer, allocating..\n");
+				ptr[r] = (Matrix_data_type*) calloc(m->col_size, sizeof(Matrix_data_type));
+			}
 			if(ptr[r] == NULL){
 				printf("matrix memory allocation error!\n");
+				nrf_delay_ms(500);
 				// free previously allocated memory
 				for(int j = r-1; j >= 0; j--)
 				{
@@ -249,7 +264,11 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 				init_row(ptr[r], 0, ncol, INIT_MODE_CONSTANT, con);
 			}			
 		}
+		printf("Free %d\n", m->col_size);
+		nrf_delay_ms(200);
 		free(m->dptr);
+		printf("Free complete %d\n", m->col_size);
+		nrf_delay_ms(200);
 		m->ncol = ncol;
 		m->nrow = nrow;
 		m->row_size = row_size;
@@ -257,6 +276,7 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 		return 0;
 	}
 	else if(ncol > m->col_size){//row usable //deprecated since i change the condition for both axis reset
+		printf("You should not see this!\n");
 		//row_size won't change
 		//m->col_size increase to row_size 
 		// Matrix_data_type** ptr = m->dptr;
@@ -284,13 +304,16 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 		return 0;
 	}
 	else{// can inplace!
+		printf("All usable!\n");
 
 		Matrix_data_type** ptr = m->dptr;
-		if(nrow <= (int)(m->nrow) && ncol <= (int)(m->ncol)){//just change nrow, ncol
+		if(nrow <= m->nrow && ncol <= m->ncol){//just change nrow, ncol
 			m->ncol = ncol;
 			m->nrow = nrow;
+			//printf("Simple enlarge!\n");
 			return 0;
 		}
+		//printf("Complex enlarge! %d,%d,%d,%d\n", nrow, m->nrow, ncol, m->ncol);
 
 		for(int r = 0; r < (int)(m->nrow); r++){
 			init_row(ptr[r], m->ncol, ncol, INIT_MODE_CONSTANT, con);
@@ -298,9 +321,14 @@ uint8_t matrix_2d_resize(Matrix_2d* m, size_t nrow, size_t ncol, Init_mode mode,
 		// create new row
 		for(int r = m->nrow; r < (int)(nrow); r++)
 		{
-			ptr[r] = (Matrix_data_type*) calloc(m->col_size, sizeof(Matrix_data_type));
+			if(ptr[r] == NULL)// prevent memory leak since 
+			{
+				printf("NULL pointer, allocating..\n");
+				ptr[r] = (Matrix_data_type*) calloc(m->col_size, sizeof(Matrix_data_type));
+			}
 			if(ptr[r] == NULL){
 				printf("matrix memory allocation error!\n");
+				nrf_delay_ms(500);
 				// free previously allocated memory
 				for(int j = r-1; j >= 0; j--)
 				{

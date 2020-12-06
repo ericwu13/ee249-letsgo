@@ -9,29 +9,29 @@
 // 							"G_1.bin", "G_2.bin", "G_3.bin", "G_4.bin"
 // 						 };
 const int LIBRARY_SIZE = 2;
-const char* filenames[]  = {"F_1.bin", "S_1.bin"
-						 };
-uint8_t preload_library()
+const char* filenames[]  = {"F_1.bin", "S_1.bin"};
+Library* preload_library()
 {
 	uint8_t res;
 	res = library_init(&lib_gesture, LIBRARY_SIZE);
 	if(res){
-		printf("Library init fail... aborted..."); return res;
+		printf("Library init fail... aborted..."); return NULL;
 	}
 	for(int i = 0; i< LIBRARY_SIZE; i++){
 		res = readLibFile(&(lib_gesture.c_array[i]), filenames[i]);
 		if(res){
-			printf("read file failed... aborted..."); return res;
+			printf("read file failed... aborted..."); return NULL;
 		}
 	}
 	printf("Library preload successfully!\n");
-	library_debug(&lib_gesture);
-	return res;
+	//library_debug(&lib_gesture);
+	return &lib_gesture;
 }
 
 uint8_t library_init(Library* lib, int size){
 	lib->c_array = (Candidate*) calloc(size, sizeof(Candidate));
-	matrix_2d_init(&(lib->signal), 0, 0, INIT_MODE_NOT_INITIALIZE, NULL, false);
+	//matrix_2d_init(&(lib->signal), 40, NUM_IMU_DATA, INIT_MODE_NOT_INITIALIZE, 0, NULL, false);
+	lib->signal_length = 0;
 	if(lib->c_array == NULL){
 		printf("Library initialize error!\n");
 		return -1;
@@ -127,7 +127,7 @@ void library_debug(Library* lib){
 	}
 	printf("Singal info:\n");
 	nrf_delay_ms(100);
-	matrix_2d_print(&(lib->signal));
+	//matrix_2d_print(&(lib->signal));
 }
 
 void candidate_debug(Candidate* cand){
@@ -139,30 +139,45 @@ void candidate_debug(Candidate* cand){
 }
 
 void 	library_push_signal(Library* lib, Matrix_data_type* datapoint){
-
-	matrix_2d* signal = &(lib->signal);
-	if(!matrix_2d_isInit(signal)){
-      matrix_2d_init(signal, 1, NUM_IMU_DATA, INIT_MODE_CONTANT, 0, NULL, false);
-    }
-    else{
-      matrix_2d_resize(signal, signal->nrow + 1, NUM_IMU_DATA, INIT_MODE_CONTANT, 0);
-    }
-    memcpy(signal.dtpr[signal.nrow - 1], datapoint, NUM_IMU_DATA*sizeof(Matrix_data_type))
+	printf("Pushing signal....\n");
+	nrf_delay_ms(500);
+	Matrix_2d* signal = &(lib->signal);
+	// if(!matrix_2d_isInit(signal)){
+	// 	printf("Init\n");
+ //      matrix_2d_init(signal, 1, NUM_IMU_DATA, INIT_MODE_NOT_INITIALIZE, 0, NULL, false);
+ //    }
+ //    else{
+ //    	printf("Resize to %d\n", signal->nrow + 1);
+ //    	nrf_delay_ms(200);
+ //      matrix_2d_resize(signal, signal->nrow + 1, NUM_IMU_DATA, INIT_MODE_CONSTANT, 0);
+ //      printf("Maxsize: %d, %d\n", signal->row_size, signal->col_size);
+ //    }
+ 	memcpy(signal->dptr[lib->signal_length - 1], datapoint, NUM_IMU_DATA*sizeof(Matrix_data_type));
+ 	lib->signal_length++;
+    //matrix_2d_print(signal);
 }
 
 label_t library_recognition(Library* lib){
 	float score;
 	for(int i = 0; i < LIBRARY_SIZE; i++){
-		//
+		printf("Recognition running....%d\n", i);
+		nrf_delay_ms(500);
 		Candidate* cand = &(lib->c_array[i]);
-		DTWManager_init(&(lib->dm), NUM_IMU_DATA,  &signal, &(cand->data), &euclidean_score);
-		score = DTWManager_dtw(&(lib->dm));
-		if(score > cand->threshold){
+		DTWManager_init(&(lib->dm), NUM_IMU_DATA,  &(lib->signal), &(cand->data), &euclidean_score);
+		printf("DTWManager init complete %d\n", i);
+		nrf_delay_ms(500);
+		score = DTWManager_dtw(&(lib->dm), lib->signal_length, cand->data.nrow);
+		//DTWManager_print(&(lib->dm));
+		printf("Gesture Label: %c Score: %f\n", cand->label, score);
+		nrf_delay_ms(500);
+		if(score < cand->threshold){
 			return cand->label;
 		}
 	}
 	return 0;//no result;
 }
 void  	library_reset_signal(Library* lib){
-	matrix_2d_resize(&(lib->signal), 0, NUM_IMU_DATA, INIT_MODE_CONTANT, 0);
+	//matrix_2d_resize(&(lib->signal), 0, NUM_IMU_DATA, INIT_MODE_NOT_INITIALIZE, 0);
+	lib->signal_length = 0;
+	//matrix_2d_print(&(lib->signal));
 }
