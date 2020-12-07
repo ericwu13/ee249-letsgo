@@ -59,6 +59,8 @@ static simple_ble_service_t letsgo_service = {{
                 0xB5,0x4D,0x22,0x2B,0x89,0x10,0xE6,0x32}
 }};
 
+
+
 static simple_ble_char_t letsgo_accel_char = {.uuid16 = 0x108a};
 // static simple_ble_char_t letsgo_gyro_char = {.uuid16 = 0x108b};
 // static simple_ble_char_t letsgo_magnet_char = {.uuid16 = 0x108c};
@@ -173,8 +175,18 @@ int main(void) {
  
    simple_ble_add_service(&letsgo_service);
 
-   Library* lib_ptr = preload_library();
-   if(!lib_ptr){
+
+   virtual_timer_init();
+
+   virtual_timer_reset();
+
+   //Library* lib_ptr = preload_library();
+   Library* lib_ptr = &lib_gesture;
+   int res = library_init(&lib_gesture, 1);
+
+   uint32_t time = read_timer();
+   printf("Time elapsed: %ld\n", time);
+   if(res){
     printf("Library Error!\n");
     return 0;
    }
@@ -225,11 +237,13 @@ int main(void) {
     //   nrf_delay_ms(100);
     // }    
     //memcpy(scoreMatrix[counter], IMU_data, NUM_IMU_DATA*sizeof(Matrix_data_type));
-
+    virtual_timer_reset();
     for(int i = 0; i < LIBRARY_SIZE; i++){
-      Candidate* cand = &(lib_ptr->c_array[i]);
+      load_library(i);
+      Candidate* cand = &(lib_ptr->c_array[0]);
+      //candidate_debug(cand);
       for (int n = 0; n < MAX_SIGNAL_LENGTH; n++){
-        for(int m = 0; m < 20; m++){
+        for(int m = 0; m < counter; m++){
           Matrix_data_type match;// d->dptr[n-1][m-1]
           Matrix_data_type del;// d->dptr[n-1][m]
           Matrix_data_type insert;// d->dptr[n][m-1]
@@ -269,13 +283,18 @@ int main(void) {
         label = cand->label;
       }
       else label = 0;
-      //printf("Gesture Label: %c Score: %f\n", cand->label, score);
+      printf("Gesture Label: %c Score: %f\n", cand->label, score);
+      //nrf_delay_ms(100);
+
     }
+    time = read_timer();
+    printf("Time elapsed: %ld, counter %d\n", time, counter);
+
     if(counter == MAX_SIGNAL_LENGTH){
       counter = 0;
     }
     
-    // library_debug(&lib_gesture);
+    //library_debug(&lib_gesture);
     // for(int i = 0; i < 20; i++){
     //   for(int j = 0; j < 20; j++){
     //     scoreMatrix[i][j] = 40;
@@ -334,15 +353,12 @@ int main(void) {
 
     
     error_code = simple_ble_notify_char(&letsgo_accel_char);
-    if(timers++ % 20 == 0)
-      printf("times: %d\n",timers);
     // error_code = simple_ble_notify_char(&letsgo_gyro_char);
     // error_code = simple_ble_notify_char(&letsgo_magnet_char);
     // error_code = simple_ble_notify_char(&letsgo_flex_char);
 
     APP_ERROR_CHECK(error_code);
 
-    //nrf_delay_ms(1);
-
+    nrf_delay_ms(1000);
   }
 }

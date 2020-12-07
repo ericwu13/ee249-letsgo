@@ -38,12 +38,16 @@ typedef struct library {
 
 Library lib_gesture;
 
+void virtual_timer_init(void);
+void virtual_timer_reset();
+uint32_t read_timer(void);
 
 void	 	candidate_init(Candidate* cand,int nrow, int ncol, label_t label, float threshold);
 void 		candidate_debug(Candidate* cand);
-uint8_t 	readLibFile(Candidate* cand, const char* filename);
+uint8_t 	readLibFile(Candidate* cand, const char* filename, FIL* lib_file);
 
 Library* 	preload_library();
+Library* 	load_library(int idx);
 
 uint8_t 	library_init(Library* lib, int size);
 void 		library_delete(Library* lib);

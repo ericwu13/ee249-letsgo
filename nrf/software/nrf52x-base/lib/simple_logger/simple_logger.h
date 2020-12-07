@@ -2,6 +2,9 @@
 #define SIMPLE_LOGGER_H
 
 #include <stdint.h>
+#include "chanfs/ff.h"
+#include "chanfs/diskio.h"
+#include "stdarg.h"
 
 //////////////USAGE GUIDE////////////
 //	//REQUIRES: -
@@ -66,4 +69,10 @@ uint8_t readfile(uint8_t* buf, uint8_t buf_len);
 uint8_t readline(uint8_t* buf, uint8_t buf_len);
 uint8_t moveptr_head();
 uint8_t closefile();
+
+uint8_t mount_sd();
+uint8_t openfile_complete(FIL*, const char* filename, const char *permissions);
+uint8_t moveptr_head_complete(FIL*);
+uint8_t closefile_complete(FIL*);
+uint8_t readfile_complete(FIL*, uint8_t* buf, uint8_t buf_len);
 #endif

@@ -1,13 +1,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "stdarg.h"
+
 #include "app_timer.h"
 #include "nrf_drv_clock.h"
 
 #include "simple_logger.h"
-#include "chanfs/ff.h"
-#include "chanfs/diskio.h"
+
 
 static uint8_t simple_logger_inited = 0;
 static uint8_t simple_logger_file_exists = 0;
@@ -417,4 +416,137 @@ uint8_t openfile(const char* filename, const char *permissions){//utilize simple
 
 	uint8_t err_code = logger_init();
 	return  err_code;
+}
+
+uint8_t moveptr_head_complete(FIL* file_ptr){
+	FRESULT res = f_lseek(file_ptr, 0);
+	if(res != FR_OK) {
+		printf("ERROR: Failed reading from SD card: %i\n", res);
+		error();
+	}
+	return res;	
+}
+uint8_t closefile_complete(FIL* file_ptr)
+{
+	FRESULT res = f_close(file_ptr);
+	if(res != FR_OK) {
+		printf("ERROR: Failed reading from SD card: %i\n", res);
+		error();
+	}
+	return res;		
+}
+
+uint8_t readfile_complete(FIL* file_ptr, uint8_t* buf, uint8_t buf_len)
+{
+    // Buffer should be cleared before calling this function
+	UINT read_len = 0;
+	uint8_t rres = READ_FILE_OK;
+
+	FRESULT res = f_read(file_ptr, (void*)buf, buf_len, &read_len);
+
+	if (read_len != buf_len) {
+		printf("WARNING: Should have read %i bytes, but only read %i\n", buf_len, read_len);
+		if(f_size(file_ptr) == f_tell(file_ptr))
+			printf("EOF!\n");
+		rres = READ_FILE_EOF;
+		if(res == FR_DENIED){
+			printf("File denied! \n");
+		}
+	}
+
+	if(res != FR_OK) {
+		printf("ERROR: Failed reading from SD card: %i\n", res);
+		error();
+		rres = READ_FILE_ERROR;
+	}
+
+	// File pointer must be at EOF again; should be correct
+
+	return rres;	
+}
+
+uint8_t openfile_complete(FIL* file_ptr, const char* filename, const char *permissions){//utilize simple logger	
+	// We must have not timed out and a card is available
+	if((permissions[0] != 'w'  && permissions[0] != 'a') ||
+	   (permissions[1] != '\0' && permissions[2] != 'r') ) {
+		// We didn't set the right permissions
+		return SIMPLE_LOGGER_BAD_PERMISSIONS;
+	}
+
+	// Set write/append permissions
+	if(permissions[0] == 'w') {
+		simple_logger_opts = (FA_WRITE | FA_CREATE_ALWAYS);
+	} else if (permissions[0] == 'a'){
+		simple_logger_opts = (FA_WRITE | FA_OPEN_ALWAYS);
+	} else {
+		return SIMPLE_LOGGER_BAD_PERMISSIONS;
+	}
+
+	// Set read permission
+	if (permissions[1] == ',' && permissions[2] == 'r') {
+		simple_logger_opts |= FA_READ;
+	}
+
+	volatile FRESULT res = FR_OK;
+
+	res |= f_open(file_ptr,filename, simple_logger_opts);
+
+
+	// if(simple_logger_opts & FA_OPEN_ALWAYS) {
+	// 	// We are in append mode and should move to the end
+	// 	res |= f_lseek(file_ptr, f_size(file_ptr));
+	// }
+
+	if(header_written && !simple_logger_file_exists) {
+		f_puts(header_buffer, file_ptr);
+		res |= f_sync(file_ptr);
+	}
+	return res;
+
+}
+uint8_t mount_sd(){
+	if(!simple_logger_inited) {
+		// Initialize a timer
+		timer_init(heartbeat);
+		timer_start(1);
+	}
+
+	volatile FRESULT res = FR_OK;
+
+	res |= f_mount(&simple_logger_fs, "", 1);
+
+	// See if the file system already exists
+	while (res != FR_OK) {
+		switch (res) {
+			case FR_NOT_READY: {
+				// No disk found; check "Card Detected" signal before calling this function
+				printf("no disk found");
+				return res;
+			}
+			case FR_NO_FILESYSTEM: {
+				// No existing file system
+				res = f_mkfs("", FM_ANY, 0, work, sizeof(work));
+
+				if (res != FR_OK) {
+					printf("Failed to make a new filesystem: %d\n", res);
+					return res;
+				}
+
+				// Retry mounting now
+				res = f_mount(&simple_logger_fs, "", 1);
+				if (res != FR_OK) {
+					printf("no file system");
+					return res;
+				}
+
+				break;
+			}
+			default: {
+				printf("Unexpected error while mounting SD card: %d\n", res);
+				return res;
+			}
+		}
+	}
+	simple_logger_inited = 1;
+	return res;
 }
