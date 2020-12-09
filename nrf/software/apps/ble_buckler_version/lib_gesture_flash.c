@@ -550,7 +550,7 @@ float euclidean_score_dtw(const float* dp1, const float* dp2, int dim){
 	return sqrt(score);
 }
 
-char dtw(float ** scoreMatrix, float ** signal, int counter){
+char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], int counter){
 	for(int i = 0; i < LIBRARY_SIZE; i++){
 		for (int n = 0; n < MAX_SIGNAL_LENGTH; n++){
 	        for(int m = 0; m < counter; m++){
@@ -581,6 +581,7 @@ char dtw(float ** scoreMatrix, float ** signal, int counter){
 	        }
 		}
 		float score = scoreMatrix[MAX_SIGNAL_LENGTH-1][counter-1];
+		printf("Counter = %d, Score = %f\n", counter, score);
 		if(score < thresholds[i])
 		{
 			return gestures[i];

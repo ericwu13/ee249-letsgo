@@ -21,7 +21,7 @@ extern const float thresholds[LIBRARY_SIZE];
 extern const char  gestures  [LIBRARY_SIZE];
 
 float euclidean_score_dtw(const float* dp1, const float* dp2, int dim);
-char dtw(float ** scoreMatrix, float ** signal, int counter);
+char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], int counter);
 
 
 #endif
