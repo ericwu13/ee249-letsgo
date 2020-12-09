@@ -58,9 +58,13 @@ uint32_t read_timer(void) {
 }
 
 void timer_start(uint32_t timeout_microsecond) {
-    // NRF_TIMER4->TASKS_CLEAR = 1;
+    NRF_TIMER4->TASKS_CLEAR = 1;
     printf("start timer\n");
-    NRF_TIMER4->CC[0] = read_timer() + timeout_microsecond;
+    NRF_TIMER4->CC[0] = timeout_microsecond;
+}
+void imu_timer_start(uint32_t read_interval) {
+    // NRF_TIMER2->TASKS_CLEAR = 1;
+    NRF_TIMER2->CC[0] = read_timer() + read_interval;
 }
 
 void read_IMU(float* data, int length)
@@ -125,19 +129,9 @@ void TIMER4_IRQHandler (void) {
     NRF_TIMER4->EVENTS_COMPARE[0] = 0;
     //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
     // NRF_TIMER4->CC[0] = 0;
-    if(read_timer() >= 1000000) {
-        moved = false;
-        printf("time out!\n");
-        printf("Length of Data: %d\n", counter);
-    } else {
-        read_IMU(IMU_data, NUM_IMU_DATA);
-        printf("get data\n");
-        counter ++;
-        timer_start(100000);
-    }
-    
-    //NVIC_ClearPendingIRQ(GPIOTE_IRQn);
-    //NVIC_EnableIRQ(GPIOTE_IRQn);
+    moved = false;
+    printf("time out!\n");
+    printf("Length of Data: %d\n", counter);
 }
 
 void timer_reset(){
@@ -175,18 +169,43 @@ void interrupt_init(uint8_t pin) {
 // IRQ and Functions
 void GPIOTE_IRQHandler(void) {
     //NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
-    //printf("EVENT 0: %d", NRF_GPIOTE->EVENTS_IN[0]);
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     if(!moved) {
-        timer_reset();
-        timer_start(100000);
-        moved = true;
         printf("Motion Detected\n");
+        // timer_reset();
+        timer_start(1000000);
+        imu_timer_start(50000);
+        moved = true;    
     }
-    //NVIC_DisableIRQ(GPIOTE_IRQn);
+}
+uint32_t imu_read_timer() {
+    NRF_TIMER2->TASKS_CAPTURE[1] = 1;
+    return NRF_TIMER2->CC[1];
+}
+
+void imu_timer_init() {
+    NRF_TIMER2->BITMODE |= 3;
+    NRF_TIMER2->PRESCALER |= 4;
+    NRF_TIMER2->TASKS_CLEAR |= 1;
+    NRF_TIMER2->TASKS_START |= 1;
+    // Interrupt
+    NRF_TIMER2->INTENSET |= 1 << 16;
+    NVIC_EnableIRQ(TIMER2_IRQn);
+
 }
 
 
+void TIMER2_IRQHandler (void) {
+    NRF_TIMER2->EVENTS_COMPARE[0] = 0;
+    //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
+    // NRF_TIMER4->CC[0] = 0;
+    if(moved) {
+        read_IMU(IMU_data, NUM_IMU_DATA);
+        counter++;
+        // print_IMU(IMU_data, 13);
+        imu_timer_start(50000);
+    }
+}
 
 void print_IMU(float* data, int length)
 {
@@ -242,6 +261,8 @@ int main(void) {
     NRF_LOG_INFO("ADC Interface Init");
     timeout_timer_init();
     NRF_LOG_INFO("Timeout Timer Init");
+    imu_timer_init();
+    NRF_LOG_INFO("IMU Timer Init");
 
     NVIC_SetPriority (GPIOTE_IRQn, 1);
     NVIC_SetPriority (TIMER4_IRQn, 0);
