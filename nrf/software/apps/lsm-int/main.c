@@ -62,9 +62,15 @@ void timer_start(uint32_t timeout_microsecond) {
     // printf("start timer\n");
     NRF_TIMER4->CC[0] = timeout_microsecond;
 }
+
+uint32_t imu_read_timer() {
+    NRF_TIMER2->TASKS_CAPTURE[1] = 1;
+    return NRF_TIMER2->CC[1];
+}
+
 void imu_timer_start(uint32_t read_interval) {
     // NRF_TIMER2->TASKS_CLEAR = 1;
-    NRF_TIMER2->CC[0] = read_timer() + read_interval;
+    NRF_TIMER2->CC[0] = imu_read_timer() + read_interval;
 }
 
 void read_IMU(float* data, int length)
@@ -173,15 +179,12 @@ void GPIOTE_IRQHandler(void) {
     if(!moved) {
         printf("Motion Detected\n");
         // timer_reset();
-        timer_start(1000000);
-        imu_timer_start(50000);
+        // timer_start(1000000);
+        imu_timer_start(1000000);
         moved = true;    
     }
 }
-uint32_t imu_read_timer() {
-    NRF_TIMER2->TASKS_CAPTURE[1] = 1;
-    return NRF_TIMER2->CC[1];
-}
+
 
 void imu_timer_init() {
     NRF_TIMER2->BITMODE |= 3;
