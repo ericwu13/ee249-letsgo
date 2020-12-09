@@ -269,7 +269,7 @@ int main(void) {
 
     NVIC_SetPriority (GPIOTE_IRQn, 1);
     NVIC_SetPriority (TIMER4_IRQn, 0);
-    NVIC_SetPriority (TIMER2_IRQn, 2);
+    NVIC_SetPriority (TIMER3_IRQn, 2);
 
     NRF_LOG_INFO("Application Started!!!");
     //nrf_delay_ms(3000);
