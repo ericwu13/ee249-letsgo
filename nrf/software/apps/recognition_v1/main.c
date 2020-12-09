@@ -44,9 +44,9 @@
 
 typedef Matrix_data_type imu_data_type;//float
 float IMU_data[NUM_IMU_DATA];
-static bool volatile moved = false;
-static int counter = 0;
-static Matrix_data_type signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
+bool moved = false;
+int counter = 0;
+Matrix_data_type signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
 
 void read_IMU(imu_data_type* data, int length)
 {
@@ -296,7 +296,7 @@ int main(void) {
         getAccelIntSrc();
         //counter++;
         //virtual_timer_reset();
-        for(int i = 0; i < LIBRARY_SIZE; i++){
+        /*for(int i = 0; i < LIBRARY_SIZE; i++){
             load_library(i);
             Candidate* cand = &(lib_ptr->c_array[0]);
             for (int n = 0; n < MAX_SIGNAL_LENGTH; n++) {
@@ -335,6 +335,7 @@ int main(void) {
             else label = 0;
             printf("Gesture Label: %c Score: %f\n", cand->label, score);
         }
+        */
         //time = read_timer();
         //printf("Time elapsed: %ld, counter %d\n", time, counter);
         if(counter == MAX_SIGNAL_LENGTH){
