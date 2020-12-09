@@ -343,6 +343,6 @@ int main(void) {
         }
         error_code = simple_ble_notify_char(&letsgo_accel_char);
         APP_ERROR_CHECK(error_code);
-        //nrf_delay_ms(1000);
+        nrf_delay_ms(10);
     }
 }
