@@ -217,16 +217,16 @@ int main(void) {
     printf("IMU Interrupt Init\n");
     // initilize flex
     saadc_init();
-    NRF_LOG_INFO("ADC Interface Init\n");
+    printf("ADC Interface Init\n");
 
     // initialize timer
     virtual_timer_init();
-    NRF_LOG_INFO("Timer Init\n");
+    printf("Timer Init\n");
 
     // initialize GPIO interrupt
     interrupt_init(14);
     nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
-    NRF_LOG_INFO("Interrupt Init");
+    printf("Interrupt Init");
 
     NVIC_SetPriority (GPIOTE_IRQn, 1);
     NVIC_SetPriority (TIMER4_IRQn, 0);
