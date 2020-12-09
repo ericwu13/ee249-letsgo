@@ -44,6 +44,8 @@ static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 static int counter = 0;
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
+static const nrf_drv_timer_t timeout_timer = NRFX_TIMER_INSTANCE(2);
+static const nrf_drv_timer_t read_timer = NRFX_TIMER_INSTANCE(3);
 
 /*******************************************************************************
  *   State for this application
@@ -131,30 +133,18 @@ void saadc_init(void) {
     err_code = nrfx_saadc_channel_init(3, &channel_config3);
     APP_ERROR_CHECK(err_code);
 }
-void TIMER4_IRQHandler (void) {
-    NRF_TIMER4->EVENTS_COMPARE[0] = 0;
-    //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
-    // NRF_TIMER4->CC[0] = 0;
-    moved = false;
-    printf("time out!\n");
-    printf("Length of Data: %d\n", counter);
+void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
+    switch (event_type) {
+        case NRF_TIMER_EVENT_COMPARE0:
+            moved = false;
+            printf("time out!\n");
+            printf("Length of Data: %d\n", counter);
+            break;
+        default:
+            break;
+    }
 }
 
-void timer_reset(){
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1; 
-}
-
-void timeout_timer_init() {
-    NRF_TIMER4->BITMODE |= 3;
-    NRF_TIMER4->PRESCALER |= 4;
-    NRF_TIMER4->TASKS_CLEAR |= 1;
-    NRF_TIMER4->TASKS_START |= 1;
-    // Interrupt
-    NRF_TIMER4->INTENSET |= 1 << 16;
-    NVIC_EnableIRQ(TIMER4_IRQn);
-
-}
 
 void interrupt_init(uint8_t pin) {
     // set 14 to be interrupt
@@ -257,15 +247,21 @@ int main(void) {
     nrf_gpio_cfg_output(BUCKLER_LED0);
 
     // set 14 to be interrupt
-    interrupt_init(14);
-    nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
+    interrupt_init(28);
+    nrf_gpio_cfg_input(28, NRF_GPIO_PIN_PULLUP);
     NRF_LOG_INFO("Interrupt Init");
     saadc_init();
     NRF_LOG_INFO("ADC Interface Init");
-    timeout_timer_init();
+    
+    nrf_drv_timer_config_t timer_cfg = NRF_DRV_TIMER_DEFAULT_CONFIG;
+    nrf_drv_timer_init(&timeout_timer, &timer_cfg, timeout_IRQ);
+    time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000000);
+    nrf_drv_timer_extended_compare(
+    &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+    nrf_drv_timer_enable(&timeout);
     NRF_LOG_INFO("Timeout Timer Init");
     imu_timer_init();
-    NRF_LOG_INFO("IMU Timer Init");
+    //NRF_LOG_INFO("IMU Timer Init");
 
     NVIC_SetPriority (GPIOTE_IRQn, 1);
     NVIC_SetPriority (TIMER4_IRQn, 0);
