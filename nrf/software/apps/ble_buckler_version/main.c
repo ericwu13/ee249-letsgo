@@ -15,8 +15,6 @@
 #include "buckler.h"
 #include "lsm9ds1.h"
 
-#include "max44009.h"
-
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
@@ -27,18 +25,8 @@
 #include "nrfx_gpiote.h"
 #include "nrf_serial.h"
 
-
-#include "buckler.h"
-#include "display.h"
-#include "kobukiActuator.h"
-#include "kobukiSensorPoll.h"
-#include "kobukiSensorTypes.h"
-#include "kobukiUtilities.h"
-#include "lsm9ds1.h"
-
 #include "lib_gesture.h"
 
-float IMU_data[NUM_IMU_DATA];
 //float tmp[177];
 typedef Matrix_data_type imu_data_type;//float
 // Intervals for advertising and connections
@@ -57,8 +45,6 @@ static simple_ble_service_t letsgo_service = {{
     .uuid128 = {0x70,0x6C,0x98,0x41,0xCE,0x43,0x14,0xA9,
                 0xB5,0x4D,0x22,0x2B,0x89,0x10,0xE6,0x32}
 }};
-
-
 
 static simple_ble_char_t letsgo_accel_char = {.uuid16 = 0x108a};
 // static simple_ble_char_t letsgo_gyro_char = {.uuid16 = 0x108b};
@@ -195,9 +181,9 @@ int main(void) {
   initialization of the communication to the IMU & flexsors.
   */
  
-  simple_ble_add_characteristic(1, 1, 1, 0,
-       sizeof(imu_data_type) * NUM_IMU_DATA, (uint8_t*)&(IMU_data[0]),
-       &letsgo_service, &letsgo_accel_char);
+  // simple_ble_add_characteristic(1, 1, 1, 0,
+  //      sizeof(imu_data_type) * NUM_IMU_DATA, (uint8_t*)&(IMU_data[0]),
+  //      &letsgo_service, &letsgo_accel_char);
 
   // simple_ble_add_characteristic(1, 1, 1, 0,
   //      sizeof(float) * 3, (uint8_t*)&(IMU_data[3]),
@@ -237,9 +223,9 @@ int main(void) {
     // }    
     //memcpy(scoreMatrix[counter], IMU_data, NUM_IMU_DATA*sizeof(Matrix_data_type));
     virtual_timer_reset();
-    for(int i = 0; i < LIBRARY_SIZE; i++){
-      load_library(i);
-      Candidate* cand = &(lib_ptr->c_array[0]);
+    for(int i = 0; i < 24; i++){
+      //load_library(i);
+      //Candidate* cand = &(lib_ptr->c_array[0]);
       //candidate_debug(cand);
       for (int n = 0; n < MAX_SIGNAL_LENGTH; n++){
         for(int m = 0; m < counter; m++){
@@ -265,7 +251,7 @@ int main(void) {
           }
           else{match = del = insert = 0;}// all zero, special case return 0
 
-          scoreMatrix[n][m] = euclidean_score(cand->data.dptr[n], signal[m], NUM_IMU_DATA) 
+          scoreMatrix[n][m] = euclidean_score(test_array[i][n], signal[m], NUM_IMU_DATA) 
                   + min_of_three( match, del, insert);
         }
       }
@@ -278,11 +264,11 @@ int main(void) {
       //   printf("\n");
       //   nrf_delay_ms(100);
       // }
-      if(score < cand->threshold){
-        label = cand->label;
-      }
-      else label = 0;
-      printf("Gesture Label: %c Score: %f\n", cand->label, score);
+      // if(score < cand->threshold){
+      //   label = cand->label;
+      // }
+      // else label = 0;
+      printf("Gesture Label: %c Score: %f\n",'e',score);
       //nrf_delay_ms(100);
 
     }
@@ -292,7 +278,19 @@ int main(void) {
     if(counter == MAX_SIGNAL_LENGTH){
       counter = 0;
     }
-    
+    // for(int l = 0; l < 12; l++){
+    // printf("%d: \n",l);
+    //   for(int i = 0; i < 20; i++){
+    //     for(int j = 0; j < 13; j++){
+    //       printf("%f ", test_array[l][i][j]);
+    //       nrf_delay_ms(5);
+    //     }
+    //     printf("\n");
+    //     nrf_delay_ms(100);
+    //   }
+    //   printf("\n\n");
+    // }
+    // printf("\n");
     //library_debug(&lib_gesture);
     // for(int i = 0; i < 20; i++){
     //   for(int j = 0; j < 20; j++){
@@ -351,7 +349,7 @@ int main(void) {
     //memcpy(m.dptr[m.nrow - 1], IMU_data, NUM_IMU_DATA*sizeof(Matrix_data_type));
 
     
-    error_code = simple_ble_notify_char(&letsgo_accel_char);
+    //error_code = simple_ble_notify_char(&letsgo_accel_char);
     // error_code = simple_ble_notify_char(&letsgo_gyro_char);
     // error_code = simple_ble_notify_char(&letsgo_magnet_char);
     // error_code = simple_ble_notify_char(&letsgo_flex_char);

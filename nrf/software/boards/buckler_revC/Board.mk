@@ -89,6 +89,9 @@ BOARD_SOURCES += \
 	nrfx_uart.c\
 	nrfx_uarte.c\
 	simple_logger.c\
+	# nrf_atfifo.c\
+	# fds.c\
+	# nrf_fstorage_sd.c\
 
 ifneq ($(SOFTDEVICE_MODEL),blank)
 BOARD_SOURCES += \

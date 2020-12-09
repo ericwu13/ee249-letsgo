@@ -90,7 +90,7 @@ extern "C" {
 #define FDS_PHY_PAGES               ((FDS_VIRTUAL_PAGES * FDS_VIRTUAL_PAGE_SIZE) / FDS_PHY_PAGE_SIZE)
 
 // The number of physical pages at the end of the flash that are reserved by other modules.
-#define FDS_PHY_PAGES_RESERVED      ((FDS_VIRTUAL_PAGES_RESERVED * FDS_VIRTUAL_PAGE_SIZE) / FDS_PHY_PAGE_SIZE)
+#define FDS_PHY_PAGES_RESERVED      0//((FDS_VIRTUAL_PAGES_RESERVED * FDS_VIRTUAL_PAGE_SIZE) / FDS_PHY_PAGE_SIZE)
 
 // The size of a virtual page, in number of physical pages.
 #define FDS_PHY_PAGES_IN_VPAGE      (FDS_VIRTUAL_PAGE_SIZE / FDS_PHY_PAGE_SIZE)

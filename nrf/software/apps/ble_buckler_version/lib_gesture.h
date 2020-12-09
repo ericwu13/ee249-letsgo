@@ -10,6 +10,7 @@
 #include "simple_logger.h"
 #include "matrix_2d.h"
 #include "nrf_delay.h"
+//#include "fds.h"
 
 #define NUM_IMU_DATA 13
 #define MAX_SIGNAL_LENGTH 20
@@ -20,11 +21,12 @@
 #define length_size sizeof(length_t)
 
 #define DTW_INF FLT_MAX 
-#define score_t Matrix_data_type;
+#define score_t Matrix_data_type
+#define RECORD_START_KEY 0x0001
 
 extern const int LIBRARY_SIZE;
 extern const char* filenames[];
-
+extern const float test_array[24][20][13];
 
 
 typedef struct candidate {
