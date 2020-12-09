@@ -41,6 +41,7 @@ Library lib_gesture;
 void virtual_timer_init(void);
 void virtual_timer_reset();
 uint32_t read_timer(void);
+void virtual_timer_start(uint32_t timeout_microsecond);
 
 void	 	candidate_init(Candidate* cand,int nrow, int ncol, label_t label, float threshold);
 void 		candidate_debug(Candidate* cand);
