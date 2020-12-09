@@ -59,6 +59,7 @@ uint32_t read_timer(void) {
 
 void timer_start(uint32_t timeout_microsecond) {
     // NRF_TIMER4->TASKS_CLEAR = 1;
+    printf("start timer\n");
     NRF_TIMER4->CC[0] = read_timer() + timeout_microsecond;
 }
 
