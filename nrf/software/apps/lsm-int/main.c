@@ -179,9 +179,9 @@ void GPIOTE_IRQHandler(void) {
     if(!moved) {
         printf("Motion Detected\n");
         // timer_reset();
-        // timer_start(1000000);
+        timer_start(1000000);
         moved = true;    
-        imu_timer_start(1000000);
+        //imu_timer_start(1000000);
     }
 }
 
