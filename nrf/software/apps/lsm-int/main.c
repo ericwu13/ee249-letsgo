@@ -205,7 +205,7 @@ void TIMER2_IRQHandler (void) {
     if(moved) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         counter++;
-        // print_IMU(IMU_data, 13);
+        printf("Get Data\n");
         imu_timer_start(50000);
     }
 }
