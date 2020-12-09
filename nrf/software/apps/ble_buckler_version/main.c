@@ -29,6 +29,7 @@
 
 //float tmp[177];
 char gesture_ble = 'N';
+float (*signal_ptr)[NUM_IMU_DATA];
 
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
@@ -65,15 +66,6 @@ void ble_evt_write(ble_evt_t const* p_ble_evt) {
     if (simple_ble_is_char_event(p_ble_evt, &letsgo_accel_char)) {
       printf("Got write to Accel!\n");
     }
-    // if (simple_ble_is_char_event(p_ble_evt, &letsgo_gyro_char)) {
-    //   printf("Got write to Gyro!\n");
-    // }
-    // if (simple_ble_is_char_event(p_ble_evt, &letsgo_magnet_char)) {
-    //   printf("Got write to Magnet!\n");
-    // }
-    // if (simple_ble_is_char_event(p_ble_evt, &letsgo_flex_char)) {
-    //   printf("Got write to Flex!\n");
-    // }
 }
 
 void read_IMU(float* data, int length)
@@ -156,9 +148,11 @@ int main(void) {
 
   // Start Advertising
   simple_ble_adv_only_name();
+  virtual_timer_init();
 
   float scoreMatrix[MAX_SIGNAL_LENGTH][MAX_SIGNAL_LENGTH];
   float signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
+  signal_ptr = signal;
   int counter = 0;
   char gesture_dtw_result = 'N';
   while(1) {
@@ -166,14 +160,16 @@ int main(void) {
       read_IMU(signal[counter], NUM_IMU_DATA);
       //print_IMU(signal[counter], NUM_IMU_DATA);
       counter++;
-
-      gesture_dtw_result = dtw(scoreMatrix, signal, counter);
+      virtual_timer_reset();
+      gesture_dtw_result = dtw(scoreMatrix, signal_ptr, counter);
       if(gesture_dtw_result == 'N'){
         printf("No result!\n");
       }      
       if(counter == MAX_SIGNAL_LENGTH){
         counter = 0;
       }
+      uint32_t time = read_timer();
+      printf("Elapsed %ld\n", time);
       nrf_delay_ms(1000);
     }
     printf("Gesture detected! Result: %c\n", gesture_dtw_result);

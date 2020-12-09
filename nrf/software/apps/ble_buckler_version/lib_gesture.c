@@ -24,25 +24,7 @@ float euclidean_score(Matrix_data_type* dp1, Matrix_data_type* dp2, int dim){
 	return sqrt(score);
 }
 
-void virtual_timer_init(void) {
-  // Place your timer initialization code here
-    NRF_TIMER4->BITMODE = 0x3;
-    NRF_TIMER4->PRESCALER = 0x4;
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1;
-}
 
-void virtual_timer_reset(){
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1; 
-}
-
-uint32_t read_timer(void) {
-  NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
-  uint32_t timer_value = NRF_TIMER4 -> CC[1];
-  // Should return the value of the internal counter for TIMER4
-  return timer_value;
-}
 
 
 Library* preload_library()

@@ -38,16 +38,17 @@
 #include "kobukiUtilities.h"
 #include "lsm9ds1.h"
 
-#include "lib_gesture.h"
-#include "dtw.h"
+#include "lib_gesture_flash.h"
 
 /* Global Variables */
+typedef float imu_data_type ;//float
 
-typedef Matrix_data_type imu_data_type;//float
-float IMU_data[NUM_IMU_DATA];
-bool moved = false;
-int counter = 0;
-float** signal_ptr;
+//float IMU_data[NUM_IMU_DATA];
+volatile bool moved = false;
+volatile int counter = 0;
+float (*signal_ptr)[NUM_IMU_DATA];
+char gesture_ble = 'N';
+
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 const nrf_drv_timer_t timeout_timer = NRF_DRV_TIMER_INSTANCE(3);
 
@@ -120,8 +121,8 @@ void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
     switch (event_type) {
         case NRF_TIMER_EVENT_COMPARE0:
             if(counter < 20) {
+                read_IMU(signal_ptr[counter], NUM_IMU_DATA);
                 counter ++;
-                read_IMU(IMU_data, NUM_IMU_DATA);
                 // getAccelIntSrc();
                 printf("get data\n");
                 // lsm9ds1_read_accelerometer();
@@ -185,10 +186,6 @@ static simple_ble_char_t letsgo_accel_char = {.uuid16 = 0x108a};
  ******************************************************************************/
 // Main application state
 simple_ble_app_t* simple_ble_app;
-
-static inline float min_of_three(Matrix_data_type a, Matrix_data_type b, Matrix_data_type c){
-    return fminf(a, fminf(b, c));
-}
 
 void ble_evt_write(ble_evt_t const* p_ble_evt) {
     if (simple_ble_is_char_event(p_ble_evt, &letsgo_accel_char)) {
@@ -282,86 +279,42 @@ int main(void) {
     // Setup LED GPIO
     nrf_gpio_cfg_output(BUCKLER_LED0);
 
-    /////code from sd_card
-    // Enable SoftDevice (used to get RTC running)
-
-    // // Initialize GPIO driver
-    if (!nrfx_gpiote_is_init()) {
-      error_code = nrfx_gpiote_init();
-    }
-    APP_ERROR_CHECK(error_code);
-
-    // //Setup library
-
-
     //Setup BLE
     simple_ble_app = simple_ble_init(&ble_config);
  
     simple_ble_add_service(&letsgo_service);
 
-    //Library* lib_ptr = preload_library();
-    Library* lib_ptr = &lib_gesture;
-    int res = library_init(&lib_gesture, 1);
-
-    if(res){
-        printf("Library Error!\n");
-        // return 0;
-    }
-
     simple_ble_add_characteristic(1, 1, 1, 0,
-        sizeof(imu_data_type) * NUM_IMU_DATA, (uint8_t*)&(IMU_data[0]),
-        &letsgo_service, &letsgo_accel_char
+       sizeof(char), (uint8_t*)&(gesture_ble),
+       &letsgo_service, &letsgo_accel_char
     );
 
     simple_ble_adv_only_name();
 
   
-    Matrix_data_type scoreMatrix[MAX_SIGNAL_LENGTH][MAX_SIGNAL_LENGTH];
+    float scoreMatrix[MAX_SIGNAL_LENGTH][MAX_SIGNAL_LENGTH];
+    float signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
+    signal_ptr = signal;
     int timers = 0;
-    Matrix_data_type score;
-    label_t label;
+    char gesture_dtw_result = 'N';
     while(1) {
         getAccelIntSrc();
-        /*for(int i = 0; i < LIBRARY_SIZE; i++){
-            load_library(i);
-            Candidate* cand = &(lib_ptr->c_array[0]);
-            for (int n = 0; n < MAX_SIGNAL_LENGTH; n++) {
-                for(int m = 0; m < counter; m++) {
-                    Matrix_data_type match;// d->dptr[n-1][m-1]
-                    Matrix_data_type del;// d->dptr[n-1][m]
-                    Matrix_data_type insert;// d->dptr[n][m-1]
 
-                    //prevent out of array
-                    if(n != 0 && m != 0) {//safe
-                        match = scoreMatrix[n-1][m-1];
-                        del = scoreMatrix[n-1][m];
-                        insert = scoreMatrix[n][m-1];
-                    }
-                    else if(n != 0) {// m is 0
-                        match = DTW_INF;
-                        del = scoreMatrix[n-1][m];
-                        insert = DTW_INF;
-                    }
-                    else if (m != 0 ){// n is 0
-                        match = DTW_INF;
-                        del = DTW_INF;
-                        insert = scoreMatrix[n][m-1];
-                    }
-                    else{match = del = insert = 0;}// all zero, special case return 0
-
-                    scoreMatrix[n][m] = 
-                        euclidean_score(cand->data.dptr[n], signal[m], NUM_IMU_DATA) 
-                        + min_of_three( match, del, insert);
-                }
+        while(gesture_dtw_result == 'N'){
+            gesture_dtw_result = dtw(scoreMatrix, signal, counter);
+            if(gesture_dtw_result == 'N'){
+                display_write("No Action!", DISPLAY_LINE_0);
+            }      
+            if(counter == MAX_SIGNAL_LENGTH){
+            counter = 0;
             }
-            score = scoreMatrix[MAX_SIGNAL_LENGTH-1][counter-1];
-            if(score < cand->threshold){
-                label = cand->label;
-            }
-            else label = 0;
-            printf("Gesture Label: %c Score: %f\n", cand->label, score);
+            nrf_delay_ms(1000);
         }
-        */
+        printf("Gesture detected! Result: %c\n", gesture_dtw_result);
+
+        gesture_ble = gesture_dtw_result;
+        gesture_dtw_result = 'N';
+
         error_code = simple_ble_notify_char(&letsgo_accel_char);
         APP_ERROR_CHECK(error_code);
         nrf_delay_ms(10);

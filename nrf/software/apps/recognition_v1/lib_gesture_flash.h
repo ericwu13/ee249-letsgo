@@ -20,10 +20,6 @@ extern const float test_array[LIBRARY_SIZE][MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
 extern const float thresholds[LIBRARY_SIZE];
 extern const char  gestures  [LIBRARY_SIZE];
 
-void virtual_timer_init(void);
-void virtual_timer_reset();
-uint32_t read_timer(void);
-
 float euclidean_score_dtw(const float* dp1, const float* dp2, int dim);
 char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], int counter);
 

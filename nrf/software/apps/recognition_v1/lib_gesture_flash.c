@@ -7,25 +7,6 @@ const float thresholds[LIBRARY_SIZE] = {100,100,100,100,100,100,
 
 const char  gestures  [LIBRARY_SIZE] = "FFFFLLLLRRRRBBBBSSSSGGGG";
 
-void virtual_timer_init(void) {
-  // Place your timer initialization code here
-    NRF_TIMER4->BITMODE = 0x3;
-    NRF_TIMER4->PRESCALER = 0x4;
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1;
-}
-
-void virtual_timer_reset(){
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1; 
-}
-
-uint32_t read_timer(void) {
-  NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
-  uint32_t timer_value = NRF_TIMER4 -> CC[1];
-  // Should return the value of the internal counter for TIMER4
-  return timer_value;
-}
 
 const float training_data[LIBRARY_SIZE][MAX_SIGNAL_LENGTH][NUM_IMU_DATA] = {{
     {142,2,3,4,5,6,7,8,9,10,11,12,13},
@@ -570,7 +551,10 @@ float euclidean_score_dtw(const float* dp1, const float* dp2, int dim){
 	return sqrt(score);
 }
 
-char dtw(float (*scoreMatrix)[MAX_SIGNAL_LENGTH], float (*signal)[NUM_IMU_DATA], int counter){
+char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], int counter){
+    printf("DTW start! counter = %d\n", counter);
+    if(counter == 0) return 'N';
+
 	for(int i = 0; i < LIBRARY_SIZE; i++){
 		for (int n = 0; n < MAX_SIGNAL_LENGTH; n++){
 	        for(int m = 0; m < counter; m++){
@@ -601,7 +585,7 @@ char dtw(float (*scoreMatrix)[MAX_SIGNAL_LENGTH], float (*signal)[NUM_IMU_DATA],
 	        }
 		}
 		float score = scoreMatrix[MAX_SIGNAL_LENGTH-1][counter-1];
-		printf("Counter = %d, Score = %f\n", counter, score);
+		printf("DTW Score = %f\n", counter, score);
 		if(score < thresholds[i])
 		{
 			return gestures[i];
