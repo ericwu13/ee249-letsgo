@@ -42,12 +42,50 @@
 #define NUM_IMU_DATA 13
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
+static int counter = 0;
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
 // Initialization
+
+uint32_t read_timer(void) {
+  NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
+  uint32_t timer_value = NRF_TIMER4 -> CC[1];
+  // Should return the value of the internal counter for TIMER4
+  return timer_value;
+}
+
+void read_IMU(float* data, int length)
+{
+    lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
+    lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
+    lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
+    nrf_saadc_value_t adc_val0;
+    nrf_saadc_value_t adc_val1;
+    nrf_saadc_value_t adc_val2;
+    nrf_saadc_value_t adc_val3;
+    nrfx_saadc_sample_convert(0, &adc_val0);
+    nrfx_saadc_sample_convert(1, &adc_val1);
+    nrfx_saadc_sample_convert(2, &adc_val2);
+    nrfx_saadc_sample_convert(3, &adc_val3);
+    data[0] = accel_val.x_axis;
+    data[1] = accel_val.y_axis;
+    data[2] = accel_val.z_axis;
+    data[3] = gyro_val.x_axis;
+    data[4] = gyro_val.y_axis;
+    data[5] = gyro_val.z_axis;
+    data[6] = magnet_val.x_axis;
+    data[7] = magnet_val.y_axis;
+    data[8] = magnet_val.z_axis;
+    // TODO: read flex sensor
+    data[9] =  adc_val0 * 1.8 / 512;
+    data[10] = adc_val1 * 1.8 / 512;
+    data[11] = adc_val2 * 1.8 / 512;
+    data[12] = adc_val3 * 1.8 / 512;
+    return;
+}
 void log_init(void)
 {
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
@@ -79,12 +117,25 @@ void saadc_init(void) {
 }
 void TIMER4_IRQHandler (void) {
     NRF_TIMER4->EVENTS_COMPARE[0] = 0;
-    printf("time out!\n");
     //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
-    NRF_TIMER4->CC[0] = 0;
-    moved = false;
+    // NRF_TIMER4->CC[0] = 0;
+    if(read_timer() >= 1000000) {
+        moved = false;
+        printf("time out!\n");
+        printf("Length of Data: %d\n", counter);
+    } else {
+        read_IMU(IMU_data, NUM_IMU_DATA);
+        printf("get data\n");
+        counter ++;
+    }
+    
     //NVIC_ClearPendingIRQ(GPIOTE_IRQn);
     //NVIC_EnableIRQ(GPIOTE_IRQn);
+}
+
+void timer_reset(){
+    NRF_TIMER4->TASKS_CLEAR = 0x1; 
+    NRF_TIMER4->TASKS_START = 0x1; 
 }
 
 void timeout_timer_init() {
@@ -99,8 +150,8 @@ void timeout_timer_init() {
 }
 
 void timer_start(uint32_t timeout_microsecond) {
-    NRF_TIMER4->TASKS_CLEAR = 1;
-    NRF_TIMER4->CC[0] = timeout_microsecond;
+    // NRF_TIMER4->TASKS_CLEAR = 1;
+    NRF_TIMER4->CC[0] = read_timer() + timeout_microsecond;
 }
 
 void interrupt_init(uint8_t pin) {
@@ -125,42 +176,16 @@ void GPIOTE_IRQHandler(void) {
     //printf("EVENT 0: %d", NRF_GPIOTE->EVENTS_IN[0]);
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     if(!moved) {
-        timer_start(2000000);
+        timer_reset();
+        timer_start(50000);
         moved = true;
+        printf("Motion Detected\n");
     }
     //NVIC_DisableIRQ(GPIOTE_IRQn);
 }
 
 
-void read_IMU(float* data, int length)
-{
-    lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
-    lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
-    lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
-    nrf_saadc_value_t adc_val0;
-    nrf_saadc_value_t adc_val1;
-    nrf_saadc_value_t adc_val2;
-    nrf_saadc_value_t adc_val3;
-    nrfx_saadc_sample_convert(0, &adc_val0);
-    nrfx_saadc_sample_convert(1, &adc_val1);
-    nrfx_saadc_sample_convert(2, &adc_val2);
-    nrfx_saadc_sample_convert(3, &adc_val3);
-    data[0] = accel_val.x_axis;
-    data[1] = accel_val.y_axis;
-    data[2] = accel_val.z_axis;
-    data[3] = gyro_val.x_axis;
-    data[4] = gyro_val.y_axis;
-    data[5] = gyro_val.z_axis;
-    data[6] = magnet_val.x_axis;
-    data[7] = magnet_val.y_axis;
-    data[8] = magnet_val.z_axis;
-    // TODO: read flex sensor
-    data[9] =  adc_val0 * 1.8 / 512;
-    data[10] = adc_val1 * 1.8 / 512;
-    data[11] = adc_val2 * 1.8 / 512;
-    data[12] = adc_val3 * 1.8 / 512;
-    return;
-}
+
 void print_IMU(float* data, int length)
 {
     //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
@@ -224,17 +249,17 @@ int main(void) {
     //timer_start(3000000);
     nrf_delay_ms(500);
     printf("start recording\n");
-    int counter = 0;
+
     while(1) {
         nrf_delay_ms(10);
         getAccelIntSrc();
         //read_IMU(IMU_data, NUM_IMU_DATA);
-        if(moved == true) {
-            read_IMU(IMU_data, NUM_IMU_DATA);
-            counter++;
-            //print_IMU(IMU_data, 13);
-            printf("Length of Data: %d\n", counter);
-        }
+        // if(moved == true) {
+        //     read_IMU(IMU_data, NUM_IMU_DATA);
+        //     counter++;
+        //     //print_IMU(IMU_data, 13);
+        //     printf("Length of Data: %d\n", counter);
+        // }
     }
 }
 
