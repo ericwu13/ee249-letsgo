@@ -51,10 +51,10 @@ NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 // Initialization
 
 uint32_t read_timer(void) {
-  NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
-  uint32_t timer_value = NRF_TIMER4 -> CC[1];
-  // Should return the value of the internal counter for TIMER4
-  return timer_value;
+    NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
+    uint32_t timer_value = NRF_TIMER4 -> CC[1];
+    // Should return the value of the internal counter for TIMER4
+    return timer_value;
 }
 
 void timer_start(uint32_t timeout_microsecond) {
@@ -64,13 +64,12 @@ void timer_start(uint32_t timeout_microsecond) {
 }
 
 uint32_t imu_read_timer() {
-    NRF_TIMER2->TASKS_CAPTURE[1] = 1;
-    return NRF_TIMER2->CC[1];
+    NRF_TIMER3->TASKS_CAPTURE[1] = 1;
+    return NRF_TIMER3->CC[1];
 }
 
 void imu_timer_start(uint32_t read_interval) {
-    // NRF_TIMER2->TASKS_CLEAR = 1;
-    NRF_TIMER2->CC[0] = imu_read_timer() + read_interval;
+    NRF_TIMER3->CC[0] = imu_read_timer() + read_interval;
 }
 
 void read_IMU(float* data, int length)
@@ -187,19 +186,19 @@ void GPIOTE_IRQHandler(void) {
 
 
 void imu_timer_init() {
-    NRF_TIMER2->BITMODE |= 3;
-    NRF_TIMER2->PRESCALER |= 4;
-    NRF_TIMER2->TASKS_CLEAR |= 1;
-    NRF_TIMER2->TASKS_START |= 1;
+    NRF_TIMER3->BITMODE |= 3;
+    NRF_TIMER3->PRESCALER |= 4;
+    NRF_TIMER3->TASKS_CLEAR |= 1;
+    NRF_TIMER3->TASKS_START |= 1;
     // Interrupt
-    NRF_TIMER2->INTENSET |= 1 << 16;
-    NVIC_EnableIRQ(TIMER2_IRQn);
+    NRF_TIMER3->INTENSET |= 1 << 16;
+    NVIC_EnableIRQ(TIMER3_IRQn);
 
 }
 
 
-void TIMER2_IRQHandler (void) {
-    NRF_TIMER2->EVENTS_COMPARE[0] = 0;
+void TIMER3_IRQHandler (void) {
+    NRF_TIMER3->EVENTS_COMPARE[0] = 0;
     //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
     // NRF_TIMER4->CC[0] = 0;
     if(moved) {
