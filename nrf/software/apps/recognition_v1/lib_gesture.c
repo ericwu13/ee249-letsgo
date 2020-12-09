@@ -12,35 +12,6 @@ const int LIBRARY_SIZE = 2;
 const char* filenames[]  = { "S_1.bin", "F_1.bin"};
 FIL lib_files[2];
 
-void virtual_timer_init(void) {
-    // Place your timer initialization code here
-    NRF_TIMER4->BITMODE = 0x3;
-    NRF_TIMER4->PRESCALER = 0x4;
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1;
-
-    // interrupt stuff 
-    NRF_TIMER4->INTENSET |= 1 << 16;
-    NVIC_EnableIRQ(TIMER4_IRQn);
-}
-
-void virtual_timer_reset(){
-    NRF_TIMER4->TASKS_CLEAR = 0x1; 
-    NRF_TIMER4->TASKS_START = 0x1; 
-}
-
-void virtual_timer_start(uint32_t timeout_microsecond) {
-    //NRF_TIMER4->TASKS_CLEAR = 1;
-    NRF_TIMER4->CC[0] = read_timer() + timeout_microsecond;
-}
-
-uint32_t read_timer(void) {
-  NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
-  uint32_t timer_value = NRF_TIMER4 -> CC[1];
-  // Should return the value of the internal counter for TIMER4
-  return timer_value;
-}
-
 
 Library* preload_library()
 {

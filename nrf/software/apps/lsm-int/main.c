@@ -2,7 +2,7 @@
 //
 // Creates a service for changing LED state over BLE
 
-#define EXTERNAL_IMU
+// #define EXTERNAL_IMU
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -24,6 +24,7 @@
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_drv_spi.h"
+#include "nrf_drv_timer.h"
 
 #include "kobukiActuator.h"
 #include "kobukiSensorPoll.h"
@@ -44,36 +45,13 @@ static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 static int counter = 0;
 NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
-static const nrf_drv_timer_t timeout_timer = NRFX_TIMER_INSTANCE(2);
-static const nrf_drv_timer_t read_timer = NRFX_TIMER_INSTANCE(3);
+static const nrf_drv_timer_t timeout_timer = NRF_DRV_TIMER_INSTANCE(3);
+static const nrf_drv_timer_t read_timer = NRF_DRV_TIMER_INSTANCE(4);
 
 /*******************************************************************************
  *   State for this application
  ******************************************************************************/
 // Initialization
-
-uint32_t read_timer(void) {
-    NRF_TIMER4->TASKS_CAPTURE[1] = 0x1;
-    uint32_t timer_value = NRF_TIMER4 -> CC[1];
-    // Should return the value of the internal counter for TIMER4
-    return timer_value;
-}
-
-void timer_start(uint32_t timeout_microsecond) {
-    NRF_TIMER4->TASKS_CLEAR = 1;
-    // printf("start timer\n");
-    NRF_TIMER4->CC[0] = timeout_microsecond;
-}
-
-uint32_t imu_read_timer() {
-    NRF_TIMER3->TASKS_CAPTURE[1] = 1;
-    return NRF_TIMER3->CC[1];
-}
-
-void imu_timer_start(uint32_t read_interval) {
-    NRF_TIMER3->TASKS_CLEAR = 1;
-    NRF_TIMER3->CC[0] = read_interval;
-}
 
 void read_IMU(float* data, int length)
 {
@@ -84,10 +62,10 @@ void read_IMU(float* data, int length)
     nrf_saadc_value_t adc_val1;
     nrf_saadc_value_t adc_val2;
     nrf_saadc_value_t adc_val3;
-    nrfx_saadc_sample_convert(0, &adc_val0);
-    nrfx_saadc_sample_convert(1, &adc_val1);
-    nrfx_saadc_sample_convert(2, &adc_val2);
-    nrfx_saadc_sample_convert(3, &adc_val3);
+    // nrfx_saadc_sample_convert(0, &adc_val0);
+    // nrfx_saadc_sample_convert(1, &adc_val1);
+    // nrfx_saadc_sample_convert(2, &adc_val2);
+    // nrfx_saadc_sample_convert(3, &adc_val3);
     data[0] = accel_val.x_axis;
     data[1] = accel_val.y_axis;
     data[2] = accel_val.z_axis;
@@ -98,10 +76,10 @@ void read_IMU(float* data, int length)
     data[7] = magnet_val.y_axis;
     data[8] = magnet_val.z_axis;
     // TODO: read flex sensor
-    data[9] =  adc_val0 * 1.8 / 512;
-    data[10] = adc_val1 * 1.8 / 512;
-    data[11] = adc_val2 * 1.8 / 512;
-    data[12] = adc_val3 * 1.8 / 512;
+    // data[9] =  adc_val0 * 1.8 / 512;
+    // data[10] = adc_val1 * 1.8 / 512;
+    // data[11] = adc_val2 * 1.8 / 512;
+    // data[12] = adc_val3 * 1.8 / 512;
     return;
 }
 void log_init(void)
@@ -136,9 +114,24 @@ void saadc_init(void) {
 void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
     switch (event_type) {
         case NRF_TIMER_EVENT_COMPARE0:
-            moved = false;
-            printf("time out!\n");
-            printf("Length of Data: %d\n", counter);
+            if(counter < 20) {
+                counter ++;
+                read_IMU(IMU_data, NUM_IMU_DATA);
+                // getAccelIntSrc();
+                printf("get data\n");
+                // lsm9ds1_read_accelerometer();
+                // uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000);
+                // nrf_drv_timer_clear(&timeout_timer);
+                // nrf_drv_timer_compare(
+                //     &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, true);
+                
+            } else {
+                moved = false;
+                printf("time out!\n");
+                printf("Length of Data: %d\n", counter);
+                nrf_drv_timer_disable(&timeout_timer);
+            }
+            
             break;
         default:
             break;
@@ -168,37 +161,16 @@ void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     if(!moved) {
         printf("Motion Detected\n");
-        // timer_reset();
-        timer_start(1000000);
-        moved = true;    
-        //imu_timer_start(1000000);
+        moved = true;
+        counter = 0;
+        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 50);
+        nrf_drv_timer_extended_compare(
+            &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+        nrf_drv_timer_enable(&timeout_timer);
+
     }
 }
 
-
-void imu_timer_init() {
-    NRF_TIMER3->BITMODE |= 3;
-    NRF_TIMER3->PRESCALER |= 4;
-    NRF_TIMER3->TASKS_CLEAR |= 1;
-    NRF_TIMER3->TASKS_START |= 1;
-    // Interrupt
-    NRF_TIMER3->INTENSET |= 1 << 16;
-    NVIC_EnableIRQ(TIMER3_IRQn);
-
-}
-
-
-void TIMER3_IRQHandler (void) {
-    NRF_TIMER3->EVENTS_COMPARE[0] = 0;
-    //NRF_TIMER4->TASKS_CAPTURE[1] = 1;
-    // NRF_TIMER4->CC[0] = 0;
-    if(moved) {
-        read_IMU(IMU_data, NUM_IMU_DATA);
-        counter++;
-        printf("Get Data\n");
-        imu_timer_start(50000);
-    }
-}
 
 void print_IMU(float* data, int length)
 {
@@ -230,7 +202,7 @@ int main(void) {
     i2c_config.sda = BUCKLER_SENSORS_SDA;
     #endif
     
-    i2c_config.frequency = NRF_TWIM_FREQ_400K;
+    i2c_config.frequency = NRF_TWIM_FREQ_100K;
     ret_code_t error_code = nrf_twi_mngr_init(&twi_mngr_instance, &i2c_config);
     APP_ERROR_CHECK(error_code);
     #ifdef EXTERNAL_IMU
@@ -255,17 +227,16 @@ int main(void) {
     
     nrf_drv_timer_config_t timer_cfg = NRF_DRV_TIMER_DEFAULT_CONFIG;
     nrf_drv_timer_init(&timeout_timer, &timer_cfg, timeout_IRQ);
-    time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000000);
-    nrf_drv_timer_extended_compare(
-    &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
-    nrf_drv_timer_enable(&timeout);
     NRF_LOG_INFO("Timeout Timer Init");
-    imu_timer_init();
-    //NRF_LOG_INFO("IMU Timer Init");
+    // nrf_drv_timer_init(&read_timer, &timer_cfg, read_IRQ);
+    // uint32_t read_ticks = nrf_drv_timer_ms_to_ticks(&read_timer, 500);
+    // nrf_drv_timer_extended_compare(&read_timer, NRF_TIMER_CC_CHANNEL0, read_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+    // nrf_drv_timer_enable(&read_timer);
+    NRF_LOG_INFO("Read Timer Init");
 
-    NVIC_SetPriority (GPIOTE_IRQn, 1);
-    NVIC_SetPriority (TIMER4_IRQn, 0);
-    NVIC_SetPriority (TIMER3_IRQn, 2);
+    NVIC_SetPriority (GPIOTE_IRQn, 2);
+    NVIC_SetPriority (TIMER3_IRQn, 1);
+    NVIC_SetPriority (SPI0_TWI0_IRQn, 0);
 
     NRF_LOG_INFO("Application Started!!!");
     //nrf_delay_ms(3000);
@@ -274,13 +245,15 @@ int main(void) {
     printf("start recording\n");
 
     while(1) {
-        nrf_delay_ms(10);
-        getAccelIntSrc();
-        //read_IMU(IMU_data, NUM_IMU_DATA);
+        nrf_delay_ms(100);
+        // printf("123\n");
+        // uint8_t a = getAccelIntSrc();
+        // printf("%d\n", a);
+        // read_IMU(IMU_data, NUM_IMU_DATA);
         // if(moved == true) {
         //     read_IMU(IMU_data, NUM_IMU_DATA);
         //     counter++;
-        //     //print_IMU(IMU_data, 13);
+        print_IMU(IMU_data, 13);
         //     printf("Length of Data: %d\n", counter);
         // }
     }

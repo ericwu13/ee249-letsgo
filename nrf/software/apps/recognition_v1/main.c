@@ -27,6 +27,7 @@
 #include "nrfx_gpiote.h"
 #include "nrf_serial.h"
 #include "nrf_drv_saadc.h"
+#include "nrf_drv_timer.h"
 
 
 #include "buckler.h"
@@ -40,13 +41,15 @@
 #include "lib_gesture.h"
 #include "dtw.h"
 
-#define EXTERNAL_IMU
+/* Global Variables */
 
 typedef Matrix_data_type imu_data_type;//float
 float IMU_data[NUM_IMU_DATA];
 bool moved = false;
 int counter = 0;
-Matrix_data_type signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
+float** signal_ptr;
+NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
+const nrf_drv_timer_t timeout_timer = NRF_DRV_TIMER_INSTANCE(3);
 
 void read_IMU(imu_data_type* data, int length)
 {
@@ -113,16 +116,30 @@ void saadc_init(void) {
     APP_ERROR_CHECK(err_code);
 }
 
-void TIMER4_IRQHandler (void) {
-    NRF_TIMER4->EVENTS_COMPARE[0] = 0;
-    printf("get data\n");
-    read_IMU(signal[counter], NUM_IMU_DATA);
-    counter ++;
-    if(read_timer() >= 1000000) {
-        printf("time out\n");
-        moved = false;
-    } else {
-        virtual_timer_start(50000);
+void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
+    switch (event_type) {
+        case NRF_TIMER_EVENT_COMPARE0:
+            if(counter < 20) {
+                counter ++;
+                read_IMU(IMU_data, NUM_IMU_DATA);
+                // getAccelIntSrc();
+                printf("get data\n");
+                // lsm9ds1_read_accelerometer();
+                // uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000);
+                // nrf_drv_timer_clear(&timeout_timer);
+                // nrf_drv_timer_compare(
+                //     &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, true);
+                
+            } else {
+                moved = false;
+                printf("time out!\n");
+                printf("Length of Data: %d\n", counter);
+                nrf_drv_timer_disable(&timeout_timer);
+            }
+            
+            break;
+        default:
+            break;
     }
 }
 
@@ -143,14 +160,17 @@ void interrupt_init(uint8_t pin) {
 
 void GPIOTE_IRQHandler(void) {
     //NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
-    //printf("EVENT 0: %d", NRF_GPIOTE->EVENTS_IN[0]);
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     if(!moved) {
-        virtual_timer_reset();
-        virtual_timer_start(50000);
+        printf("Motion Detected\n");
         moved = true;
+        counter = 0;
+        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 50);
+        nrf_drv_timer_extended_compare(
+            &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
+        nrf_drv_timer_enable(&timeout_timer);
+
     }
-    //NVIC_DisableIRQ(GPIOTE_IRQn);
 }
 
 static simple_ble_char_t letsgo_accel_char = {.uuid16 = 0x108a};
@@ -193,7 +213,6 @@ void print_IMU(imu_data_type* data, int length)
     printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12]);
 }
 
-NRF_TWI_MNGR_DEF(twi_mngr_instance, 5, 0);
 int main(void) {
     // initialize IMU
     nrf_drv_twi_config_t i2c_config = NRF_DRV_TWI_DEFAULT_CONFIG;
@@ -220,16 +239,26 @@ int main(void) {
     printf("ADC Interface Init\n");
 
     // initialize timer
-    virtual_timer_init();
-    printf("Timer Init\n");
+    nrf_drv_timer_config_t timer_cfg = NRF_DRV_TIMER_DEFAULT_CONFIG;
+    nrf_drv_timer_init(&timeout_timer, &timer_cfg, timeout_IRQ);
+    printf("Timeout Timer Init\n");
 
     // initialize GPIO interrupt
+    #ifdef EXTERNAL_IMU
     interrupt_init(14);
     nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
-    printf("Interrupt Init");
+    #else
+    interrupt_init(28);
+    nrf_gpio_cfg_input(28, NRF_GPIO_PIN_PULLUP);
+    #endif
+    printf("GPIO Interrupt Init");
 
-    NVIC_SetPriority (GPIOTE_IRQn, 1);
-    NVIC_SetPriority (TIMER4_IRQn, 0);
+    
+
+    NVIC_SetPriority (GPIOTE_IRQn, 2);
+    NVIC_SetPriority (TIMER3_IRQn, 1);
+    NVIC_SetPriority (SPI0_TWI0_IRQn, 0);
+
 
     // initialize display
     nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
@@ -276,7 +305,7 @@ int main(void) {
 
     if(res){
         printf("Library Error!\n");
-        return 0;
+        // return 0;
     }
 
     simple_ble_add_characteristic(1, 1, 1, 0,
@@ -292,10 +321,7 @@ int main(void) {
     Matrix_data_type score;
     label_t label;
     while(1) {
-        //read_IMU(signal[counter], NUM_IMU_DATA);
         getAccelIntSrc();
-        //counter++;
-        //virtual_timer_reset();
         /*for(int i = 0; i < LIBRARY_SIZE; i++){
             load_library(i);
             Candidate* cand = &(lib_ptr->c_array[0]);
@@ -336,11 +362,6 @@ int main(void) {
             printf("Gesture Label: %c Score: %f\n", cand->label, score);
         }
         */
-        //time = read_timer();
-        //printf("Time elapsed: %ld, counter %d\n", time, counter);
-        if(counter == MAX_SIGNAL_LENGTH){
-            counter = 0;
-        }
         error_code = simple_ble_notify_char(&letsgo_accel_char);
         APP_ERROR_CHECK(error_code);
         nrf_delay_ms(10);
