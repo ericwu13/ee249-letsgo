@@ -124,7 +124,7 @@ void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
                 read_IMU(signal_ptr[counter], NUM_IMU_DATA);
                 counter ++;
                 // getAccelIntSrc();
-                printf("get data\n");
+                printf("get data %d\n", counter);
                 // lsm9ds1_read_accelerometer();
                 // uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000);
                 // nrf_drv_timer_clear(&timeout_timer);
@@ -301,14 +301,15 @@ int main(void) {
         getAccelIntSrc();
 
         while(gesture_dtw_result == 'N'){
-            gesture_dtw_result = dtw(scoreMatrix, signal, counter);
+            int dtw_counter = counter;
+            gesture_dtw_result = dtw(scoreMatrix, signal, dtw_counter);
             if(gesture_dtw_result == 'N'){
                 display_write("No Action!", DISPLAY_LINE_0);
             }      
-            if(counter == MAX_SIGNAL_LENGTH){
+            if(dtw_counter == MAX_SIGNAL_LENGTH){
             counter = 0;
             }
-            nrf_delay_ms(1000);
+            nrf_delay_ms(20);
         }
         printf("Gesture detected! Result: %c\n", gesture_dtw_result);
 

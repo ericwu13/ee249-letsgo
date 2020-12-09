@@ -585,7 +585,7 @@ char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], i
 	        }
 		}
 		float score = scoreMatrix[MAX_SIGNAL_LENGTH-1][counter-1];
-		printf("DTW Score = %f\n", counter, score);
+		printf("DTW for library %d: Score = %f\n", i, score);
 		if(score < thresholds[i])
 		{
 			return gestures[i];
