@@ -127,6 +127,7 @@ void TIMER4_IRQHandler (void) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         printf("get data\n");
         counter ++;
+        timer_start(50000);
     }
     
     //NVIC_ClearPendingIRQ(GPIOTE_IRQn);
