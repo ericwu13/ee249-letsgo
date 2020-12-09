@@ -57,6 +57,11 @@ uint32_t read_timer(void) {
   return timer_value;
 }
 
+void timer_start(uint32_t timeout_microsecond) {
+    // NRF_TIMER4->TASKS_CLEAR = 1;
+    NRF_TIMER4->CC[0] = read_timer() + timeout_microsecond;
+}
+
 void read_IMU(float* data, int length)
 {
     lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
@@ -148,11 +153,6 @@ void timeout_timer_init() {
     NRF_TIMER4->INTENSET |= 1 << 16;
     NVIC_EnableIRQ(TIMER4_IRQn);
 
-}
-
-void timer_start(uint32_t timeout_microsecond) {
-    // NRF_TIMER4->TASKS_CLEAR = 1;
-    NRF_TIMER4->CC[0] = read_timer() + timeout_microsecond;
 }
 
 void interrupt_init(uint8_t pin) {
