@@ -59,7 +59,7 @@ uint32_t read_timer(void) {
 
 void timer_start(uint32_t timeout_microsecond) {
     NRF_TIMER4->TASKS_CLEAR = 1;
-    printf("start timer\n");
+    // printf("start timer\n");
     NRF_TIMER4->CC[0] = timeout_microsecond;
 }
 void imu_timer_start(uint32_t read_interval) {
@@ -266,6 +266,7 @@ int main(void) {
 
     NVIC_SetPriority (GPIOTE_IRQn, 1);
     NVIC_SetPriority (TIMER4_IRQn, 0);
+    NVIC_SetPriority (TIMER2_IRQn, 2);
 
     NRF_LOG_INFO("Application Started!!!");
     //nrf_delay_ms(3000);
