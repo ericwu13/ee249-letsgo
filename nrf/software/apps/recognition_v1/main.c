@@ -26,6 +26,7 @@
 #include "nrf_sdh.h"
 #include "nrfx_gpiote.h"
 #include "nrf_serial.h"
+#include "nrf_drv_saadc.h"
 
 
 #include "buckler.h"
@@ -46,6 +47,28 @@ float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 static int counter = 0;
 static Matrix_data_type signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
+
+void read_IMU(imu_data_type* data, int length)
+{
+    lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
+    lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
+    lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
+    data[0] = accel_val.x_axis;
+    data[1] = accel_val.y_axis;
+    data[2] = accel_val.z_axis;
+    data[3] = gyro_val.x_axis;
+    data[4] = gyro_val.y_axis;
+    data[5] = gyro_val.z_axis;
+    data[6] = magnet_val.x_axis;
+    data[7] = magnet_val.y_axis;
+    data[8] = magnet_val.z_axis;
+    data[9] = 0;
+    data[10] = 0;
+    data[11] = 0;
+    data[12] = 0;
+    // TODO: read flex sensor
+    return;
+}
 
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
@@ -162,27 +185,6 @@ void ble_evt_write(ble_evt_t const* p_ble_evt) {
     // }
 }
 
-void read_IMU(imu_data_type* data, int length)
-{
-    lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
-    lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
-    lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
-    data[0] = accel_val.x_axis;
-    data[1] = accel_val.y_axis;
-    data[2] = accel_val.z_axis;
-    data[3] = gyro_val.x_axis;
-    data[4] = gyro_val.y_axis;
-    data[5] = gyro_val.z_axis;
-    data[6] = magnet_val.x_axis;
-    data[7] = magnet_val.y_axis;
-    data[8] = magnet_val.z_axis;
-    data[9] = 0;
-    data[10] = 0;
-    data[11] = 0;
-    data[12] = 0;
-    // TODO: read flex sensor
-    return;
-}
 void print_IMU(imu_data_type* data, int length)
 {
     printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
