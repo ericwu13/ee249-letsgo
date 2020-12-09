@@ -12,6 +12,15 @@ const int LIBRARY_SIZE = 2;
 const char* filenames[]  = { "S_1.bin", "F_1.bin"};
 FIL lib_files[2];
 
+float euclidean_score(Matrix_data_type* dp1, Matrix_data_type* dp2, int dim){
+	Matrix_data_type score = 0;
+	for(int i = 0; i < dim; i++){
+		Matrix_data_type diff = dp1[i] - dp2[i];
+		score += diff*diff;
+	}
+	return sqrt(score);
+}
+
 void virtual_timer_init(void) {
   // Place your timer initialization code here
     NRF_TIMER4->BITMODE = 0x3;
@@ -190,46 +199,252 @@ void candidate_debug(Candidate* cand){
 	matrix_2d_print(&(cand->data));
 }
 
-void 	library_push_signal(Library* lib, Matrix_data_type* datapoint){
-	printf("Pushing signal....\n");
-	nrf_delay_ms(500);
-	Matrix_2d* signal = &(lib->signal);
-	// if(!matrix_2d_isInit(signal)){
-	// 	printf("Init\n");
- //      matrix_2d_init(signal, 1, NUM_IMU_DATA, INIT_MODE_NOT_INITIALIZE, 0, NULL, false);
- //    }
- //    else{
- //    	printf("Resize to %d\n", signal->nrow + 1);
- //    	nrf_delay_ms(200);
- //      matrix_2d_resize(signal, signal->nrow + 1, NUM_IMU_DATA, INIT_MODE_CONSTANT, 0);
- //      printf("Maxsize: %d, %d\n", signal->row_size, signal->col_size);
- //    }
- 	memcpy(signal->dptr[lib->signal_length - 1], datapoint, NUM_IMU_DATA*sizeof(Matrix_data_type));
- 	lib->signal_length++;
-    //matrix_2d_print(signal);
-}
+// void 	library_push_signal(Library* lib, Matrix_data_type* datapoint){
+// 	printf("Pushing signal....\n");
+// 	nrf_delay_ms(500);
+// 	Matrix_2d* signal = &(lib->signal);
+// 	// if(!matrix_2d_isInit(signal)){
+// 	// 	printf("Init\n");
+//  //      matrix_2d_init(signal, 1, NUM_IMU_DATA, INIT_MODE_NOT_INITIALIZE, 0, NULL, false);
+//  //    }
+//  //    else{
+//  //    	printf("Resize to %d\n", signal->nrow + 1);
+//  //    	nrf_delay_ms(200);
+//  //      matrix_2d_resize(signal, signal->nrow + 1, NUM_IMU_DATA, INIT_MODE_CONSTANT, 0);
+//  //      printf("Maxsize: %d, %d\n", signal->row_size, signal->col_size);
+//  //    }
+//  	memcpy(signal->dptr[lib->signal_length - 1], datapoint, NUM_IMU_DATA*sizeof(Matrix_data_type));
+//  	lib->signal_length++;
+//     //matrix_2d_print(signal);
+// }
 
-label_t library_recognition(Library* lib){
-	float score;
-	for(int i = 0; i < LIBRARY_SIZE; i++){
-		printf("Recognition running....%d\n", i);
-		nrf_delay_ms(500);
-		Candidate* cand = &(lib->c_array[i]);
-		DTWManager_init(&(lib->dm), NUM_IMU_DATA,  &(lib->signal), &(cand->data), &euclidean_score);
-		printf("DTWManager init complete %d\n", i);
-		nrf_delay_ms(500);
-		score = DTWManager_dtw(&(lib->dm), lib->signal_length, cand->data.nrow);
-		//DTWManager_print(&(lib->dm));
-		printf("Gesture Label: %c Score: %f\n", cand->label, score);
-		nrf_delay_ms(500);
-		if(score < cand->threshold){
-			return cand->label;
-		}
-	}
-	return 0;//no result;
-}
+// label_t library_recognition(Library* lib){
+// 	float score;
+// 	for(int i = 0; i < LIBRARY_SIZE; i++){
+// 		printf("Recognition running....%d\n", i);
+// 		nrf_delay_ms(500);
+// 		Candidate* cand = &(lib->c_array[i]);
+// 		DTWManager_init(&(lib->dm), NUM_IMU_DATA,  &(lib->signal), &(cand->data), &euclidean_score);
+// 		printf("DTWManager init complete %d\n", i);
+// 		nrf_delay_ms(500);
+// 		score = DTWManager_dtw(&(lib->dm), lib->signal_length, cand->data.nrow);
+// 		//DTWManager_print(&(lib->dm));
+// 		printf("Gesture Label: %c Score: %f\n", cand->label, score);
+// 		nrf_delay_ms(500);
+// 		if(score < cand->threshold){
+// 			return cand->label;
+// 		}
+// 	}
+// 	return 0;//no result;
+// }
 void  	library_reset_signal(Library* lib){
 	//matrix_2d_resize(&(lib->signal), 0, NUM_IMU_DATA, INIT_MODE_NOT_INITIALIZE, 0);
 	lib->signal_length = 0;
 	//matrix_2d_print(&(lib->signal));
 }
+
+// static void fds_evt_handler(fds_evt_t const * p_fds_evt)
+// {
+//     switch (p_fds_evt->id)
+//     {
+//         case FDS_EVT_INIT:
+//             if (p_fds_evt->result != FDS_SUCCESS)
+//             {
+//                 printf("FDS Failed!\n");
+//             }
+//             break;
+//         default:
+//             break;
+//     }
+//     fds_lock = false;
+// }
+// int library_fds_init(){
+// 	ret_code_t ret;
+
+// 	ret = fds_register(fds_evt_handler);
+// 	if (ret != FDS_SUCCESS)
+// 	{
+// 	  printf("Register FDS event handler error!\n");
+// 	}
+// 	fds_lock = true;
+// 	ret = fds_init();
+// 	if (ret != FDS_SUCCESS)
+// 	{
+// 	  printf("FDS initialization error!\n");
+// 	}
+// 	while(fds_lock){};	
+// 	printf("Removing old files...........\n");
+// 	for(int i = 0; i < LIBRARY_SIZE; i++){
+// 		uint16_t file_id = (uint16_t)i;//
+// 		fds_lock = true;
+// 		ret = fds_file_delete(file_id);
+// 		if (ret != FDS_SUCCESS)
+// 		{
+// 		    printf("Remove old files fail!\n");
+// 		    return ret;
+// 		}
+// 		while(fds_lock){};	
+// 	}
+// 	fds_lock = true;
+// 	ret = fds_gc();
+// 	if (ret != FDS_SUCCESS)
+// 	{
+// 	    printf("GC fail!\n");
+// 	    return ret;
+// 	}
+// 	while(fds_lock){};	
+// 	printf("FDS initialization successfully!\n");
+// 	return ret;
+// }
+
+
+// int  write_library_fds(){
+// 	int res;
+// 	for(int i = 0; i < LIBRARY_SIZE; i++){
+// 		load_library(i);
+// 		Candidate* cand = &(lib_gesture.c_array[0]);
+// 		///
+// 		uint16_t file_id = (uint16_t)i;//
+
+// 		res = write_candidate_fds(cand, RECORD_START_KEY, file_id);
+// 		if(res){
+// 			printf("Write Libary %d to FDS failed!\n", i);
+// 			return -1;
+// 		}
+// 	}
+// 	return 0;
+// }
+// int        load_library_fds(int idx){
+// 	Candidate* cand = &(lib_gesture.c_array[0]);
+// 	uint16_t file_id = (uint16_t)idx;
+// 	int res = load_candidate_fds(cand, RECORD_START_KEY, file_id);
+// 	if(res){
+// 		printf("Load Library from FDS failed!\n"); return -1;
+// 	}
+// 	return 0;
+// }
+
+// int  	load_candidate_fds(Candidate* cand, uint16_t record_key, uint16_t file_id){
+// 	fds_flash_record_t  flash_record;
+// 	fds_record_desc_t   record_desc;
+// 	fds_find_token_t    ftok;
+// 	/* It is required to zero the token before first use. */
+// 	memset(&ftok, 0x00, sizeof(fds_find_token_t));
+// 	memset(&record_desc, 0x00, sizeof(fds_record_desc_t));
+// 	/* Loop until all records with the given key and file ID have been found. */
+// 	fds_record_find(file_id, record_key++, &record_desc, &ftok);
+//     if (fds_record_open(&record_desc, &flash_record) != FDS_SUCCESS) {printf("Open FDS File error!\n"); return -1;}
+//     /* Access the record through the flash_record structure. */
+//     uint32_t tmplabel = *(uint32_t*)(flash_record.p_data);
+//     cand->label = (char)tmplabel;
+//     /* Close the record when done. */
+//     if (fds_record_close(&record_desc) != FDS_SUCCESS)   {printf("Close FDS File error!\n");return -1;}
+
+//  	memset(&ftok, 0x00, sizeof(fds_find_token_t));
+// 	memset(&record_desc, 0x00, sizeof(fds_record_desc_t));   
+// 	fds_record_find(file_id, record_key++, &record_desc, &ftok);
+//     if (fds_record_open(&record_desc, &flash_record) != FDS_SUCCESS) {printf("Open FDS File error!\n");return -1;}
+//     cand->threshold = *(score_t*)(flash_record.p_data);
+//     if (fds_record_close(&record_desc) != FDS_SUCCESS)  {printf("Close FDS File error!\n");return -1;}
+
+//  	memset(&ftok, 0x00, sizeof(fds_find_token_t));
+// 	memset(&record_desc, 0x00, sizeof(fds_record_desc_t));   
+// 	fds_record_find(file_id, record_key++, &record_desc, &ftok);
+//     if (fds_record_open(&record_desc, &flash_record) != FDS_SUCCESS) {printf("Open FDS File error!\n");return -1;}
+//     uint32_t nrow = *(uint32_t*)(flash_record.p_data);
+//     if (fds_record_close(&record_desc) != FDS_SUCCESS)  {printf("Close FDS File error!\n");return -1;}
+
+//  	memset(&ftok, 0x00, sizeof(fds_find_token_t));
+// 	memset(&record_desc, 0x00, sizeof(fds_record_desc_t));   
+// 	fds_record_find(file_id, record_key++, &record_desc, &ftok);
+//     if (fds_record_open(&record_desc, &flash_record) != FDS_SUCCESS) {printf("Open FDS File error!\n");return -1;}
+//     uint32_t ncol = *(uint32_t*)(flash_record.p_data);
+//     if (fds_record_close(&record_desc) != FDS_SUCCESS)  {printf("Close FDS File error!\n");return -1;}
+
+//     for(int i = 0; i < MAX_SIGNAL_LENGTH; i++){
+// 	 	memset(&ftok, 0x00, sizeof(fds_find_token_t));
+// 		memset(&record_desc, 0x00, sizeof(fds_record_desc_t));   
+// 		fds_record_find(file_id, record_key++, &record_desc, &ftok);
+// 	    if (fds_record_open(&record_desc, &flash_record) != FDS_SUCCESS) {printf("Open FDS File error!\n");return -1;}
+// 	    memcpy(&(cand->data.dptr[i]), flash_record.p_data, sizeof(Matrix_data_type) * ncol);
+// 	    if (fds_record_close(&record_desc) != FDS_SUCCESS)  {printf("Close FDS File error!\n");return -1;}    	
+//     }
+//     return 0;
+// }
+
+// int        write_candidate_fds(Candidate* cand, uint16_t record_key, uint16_t file_id){
+
+// 	fds_record_t        record;
+// 	fds_record_desc_t   record_desc;
+// 	uint32_t tmplabel = (cand->label);
+
+// 	record.file_id           = file_id;
+// 	record.key               = record_key++;
+// 	record.data.p_data       = &tmplabel;
+// 	record.data.length_words = 1;   /* one word is four bytes. */
+
+// 	ret_code_t rc;
+// 	fds_lock = true;
+// 	rc = fds_record_write(&record_desc, &record);
+// 	if (rc != FDS_SUCCESS)
+// 	{
+// 	    printf("write error!\n"); return -1;
+// 	}
+// 	while(fds_lock){};
+
+// 	record.file_id           = file_id;
+// 	record.key               = (record_key++);
+// 	record.data.p_data       = &(cand->threshold);
+// 	record.data.length_words = sizeof(score_t);   
+
+// 	fds_lock = true;
+// 	rc = fds_record_write(&record_desc, &record);
+// 	if (rc != FDS_SUCCESS)
+// 	{
+// 	    printf("write error!\n"); return -1;
+// 	}
+// 	while(fds_lock){};	
+
+// 	record.file_id           = file_id;
+// 	record.key               = (record_key++);
+// 	record.data.p_data       = &(cand->data.nrow);
+// 	record.data.length_words = 1;   
+
+// 	fds_lock = true;
+// 	rc = fds_record_write(&record_desc, &record);
+// 	if (rc != FDS_SUCCESS)
+// 	{
+// 	    printf("write error!\n"); return -1;
+// 	}
+// 	while(fds_lock){};	
+
+// 	record.file_id           = file_id;
+// 	record.key               = (record_key++);
+// 	record.data.p_data       = &(cand->data.ncol);
+// 	record.data.length_words = 1;   
+
+// 	fds_lock = true;
+// 	rc = fds_record_write(&record_desc, &record);
+// 	if (rc != FDS_SUCCESS)
+// 	{
+// 	    printf("write error!\n"); return -1;
+// 	}
+// 	while(fds_lock){};		
+
+// 	for(int i = 0; i < MAX_SIGNAL_LENGTH; i++){
+// 		record.file_id           = file_id;
+// 		record.key               = (record_key++);
+// 		record.data.p_data       = &(cand->data.dptr[i]);
+// 		record.data.length_words = cand->data.ncol;   
+
+// 		fds_lock = true;
+// 		rc = fds_record_write(&record_desc, &record);
+// 		if (rc != FDS_SUCCESS)
+// 		{
+// 		    printf("write error!\n"); return -1;
+// 		}
+// 		while(fds_lock){};
+// 	}
+// 	printf("Candidate written!\n");
+// 	return 0;
+// }

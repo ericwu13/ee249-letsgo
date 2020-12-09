@@ -6,14 +6,7 @@
 
 
 
-float euclidean_score(Matrix_data_type* dp1, Matrix_data_type* dp2, int dim){
-	Matrix_data_type score = 0;
-	for(int i = 0; i < dim; i++){
-		Matrix_data_type diff = dp1[i] - dp2[i];
-		score += diff*diff;
-	}
-	return sqrt(score);
-}
+
 
 void DTWManager_print(DTWManager* dm){
 	printf("=========DTW MANAGER========\n");

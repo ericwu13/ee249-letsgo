@@ -37,7 +37,6 @@
 #include "lsm9ds1.h"
 
 #include "lib_gesture.h"
-#include "dtw.h"
 
 float IMU_data[NUM_IMU_DATA];
 //float tmp[177];

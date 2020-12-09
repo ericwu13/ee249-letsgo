@@ -14,8 +14,7 @@
 //comment out since we won't use this feature
 //#define INCREMENTAL_SUPPORT
 
-#define DTW_INF FLT_MAX 
-#define score_t Matrix_data_type;
+
 
 typedef Matrix_2d Signal;
 
@@ -44,7 +43,7 @@ float DTWManager_incremental_dtw(DTWManager* dm, Signal* signal1, Signal* signal
 float _incremental_dtw_oneside1(DTWManager* dm, Signal* signal1);
 float _incremental_dtw_oneside2(DTWManager* dm, Signal* signal2);
 #endif
-Matrix_data_type euclidean_score(Matrix_data_type* dp1, Matrix_data_type* dp2, int dim);
+
 
 
 
