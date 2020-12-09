@@ -69,7 +69,7 @@ uint32_t imu_read_timer() {
 }
 
 void imu_timer_start(uint32_t read_interval) {
-    NRF_TIMER4->TASKS_CLEAR = 1;
+    NRF_TIMER3->TASKS_CLEAR = 1;
     NRF_TIMER3->CC[0] = read_interval;
 }
 
