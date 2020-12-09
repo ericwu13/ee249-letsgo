@@ -133,7 +133,7 @@ void TIMER4_IRQHandler (void) {
         read_IMU(IMU_data, NUM_IMU_DATA);
         printf("get data\n");
         counter ++;
-        timer_start(50000);
+        timer_start(100000);
     }
     
     //NVIC_ClearPendingIRQ(GPIOTE_IRQn);
@@ -179,7 +179,7 @@ void GPIOTE_IRQHandler(void) {
     NRF_GPIOTE->EVENTS_IN[0] = 0;
     if(!moved) {
         timer_reset();
-        timer_start(50000);
+        timer_start(100000);
         moved = true;
         printf("Motion Detected\n");
     }
