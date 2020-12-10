@@ -1,6 +1,6 @@
 #include "lib_gesture_flash.h"
 
-const float thresholds[LIBRARY_SIZE] = {100,100,100,100,100,100,
+const float thresholds[LIBRARY_SIZE] = {700,700,100,100,100,100,
 										100,100,100,100,100,100,
 										100,100,100,100,100,100,
 										100,100,100,100,100,100};

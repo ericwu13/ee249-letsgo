@@ -311,6 +311,7 @@ int main(void) {
 
         while(gesture_dtw_result == 'N'){
             int dtw_counter = counter;
+            getAccelIntSrc();
             gesture_dtw_result = dtw(scoreMatrix, signal, dtw_counter);
             if(gesture_dtw_result == 'N'){
                 display_write("No Action!", DISPLAY_LINE_0);
