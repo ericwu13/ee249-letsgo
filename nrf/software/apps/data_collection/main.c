@@ -2,7 +2,7 @@
 //
 // Creates a service for changing LED state over BLE
 
-// #define EXTERNAL_IMU
+#define EXTERNAL_IMU
 
 #include <stdbool.h>
 #include <stdint.h>
