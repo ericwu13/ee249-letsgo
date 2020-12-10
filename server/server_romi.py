@@ -9,7 +9,7 @@ import time
 
 ch = 0
 addr = "C0:98:E5:49:00:00"
-SEND_COMMAND_DEBUG = True
+SEND_COMMAND_DEBUG = False
 
 def on_publish(client,userdata,result):             #create function for callback
     print("data published \n")
