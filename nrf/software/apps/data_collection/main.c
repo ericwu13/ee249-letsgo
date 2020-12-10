@@ -62,10 +62,10 @@ void read_IMU(float* data, int length)
     nrf_saadc_value_t adc_val1;
     nrf_saadc_value_t adc_val2;
     nrf_saadc_value_t adc_val3;
-    // nrfx_saadc_sample_convert(0, &adc_val0);
-    // nrfx_saadc_sample_convert(1, &adc_val1);
-    // nrfx_saadc_sample_convert(2, &adc_val2);
-    // nrfx_saadc_sample_convert(3, &adc_val3);
+    nrfx_saadc_sample_convert(0, &adc_val0);
+    nrfx_saadc_sample_convert(1, &adc_val1);
+    nrfx_saadc_sample_convert(2, &adc_val2);
+    nrfx_saadc_sample_convert(3, &adc_val3);
     data[0] = accel_val.x_axis;
     data[1] = accel_val.y_axis;
     data[2] = accel_val.z_axis;
@@ -76,10 +76,10 @@ void read_IMU(float* data, int length)
     data[7] = magnet_val.y_axis;
     data[8] = magnet_val.z_axis;
     // TODO: read flex sensor
-    // data[9] =  adc_val0 * 1.8 / 512;
-    // data[10] = adc_val1 * 1.8 / 512;
-    // data[11] = adc_val2 * 1.8 / 512;
-    // data[12] = adc_val3 * 1.8 / 512;
+    data[9] =  adc_val0 * 1.8 / 512;
+    data[10] = adc_val1 * 1.8 / 512;
+    data[11] = adc_val2 * 1.8 / 512;
+    data[12] = adc_val3 * 1.8 / 512;
     return;
 }
 void log_init(void)
@@ -117,8 +117,9 @@ void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
             if(counter < 20) {
                 counter ++;
                 read_IMU(IMU_data, NUM_IMU_DATA);
+                print_IMU(IMU_data, 13);
                 // getAccelIntSrc();
-                printf("get data\n");
+                // printf("get data\n");
                 // lsm9ds1_read_accelerometer();
                 // uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000);
                 // nrf_drv_timer_clear(&timeout_timer);
@@ -245,7 +246,7 @@ int main(void) {
     printf("start recording\n");
 
     while(1) {
-        nrf_delay_ms(100);
+        nrf_delay_ms(10);
         // printf("123\n");
         // uint8_t a = getAccelIntSrc();
         // printf("%d\n", a);
@@ -253,7 +254,7 @@ int main(void) {
         // if(moved == true) {
         //     read_IMU(IMU_data, NUM_IMU_DATA);
         //     counter++;
-        print_IMU(IMU_data, 13);
+        // print_IMU(IMU_data, 13);
         //     printf("Length of Data: %d\n", counter);
         // }
     }
