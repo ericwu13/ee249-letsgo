@@ -7,18 +7,18 @@ import struct
 import paho.mqtt.client as paho
 import time
 
-SEND_COMMAND_DEBUG = True
+SEND_COMMAND_DEBUG = False
 
-class IMUData():
-    def __init__(self):
-        # 14 float numbers
-        # 9 from IMU, 5 from flex sensor
-        self.data = [0]*3
-    def unpack(self, data): 
-        for i in range(3):
-            print(data[(4*i):(4*i)+4])
-            self.data[i] = struct.unpack('f', data[(4*i):(4*i)+4])[0]
-        print(self.data)
+# class IMUData():
+#     def __init__(self):
+#         # 14 float numbers
+#         # 9 from IMU, 5 from flex sensor
+#         self.data = [0]*3
+#     def unpack(self, data): 
+#         for i in range(3):
+#             print(data[(4*i):(4*i)+4])
+#             self.data[i] = struct.unpack('f', data[(4*i):(4*i)+4])[0]
+#         print(self.data)
 
 class LetsGoDelegate(DefaultDelegate):
     def __init__(self, params):
@@ -30,15 +30,16 @@ class LetsGoDelegate(DefaultDelegate):
         #print("Notification!")
         #check cHandle
         if(cHandle == self.LetsGo_cHandle):
-            imu_data.unpack(data)
-            ret = self.client.publish("command_1",data) 
+            gesture_char = struct.unpack('c', data)[0]
+            send_str = str(gesture_char, 'utf-8')
+            print("Receive command: ", send_str)
+            self.client.publish("command_1",send_str) 
         # ... process 'data'
 
 
 
-    def setLetsGoCHandle(self, cHandle, imu_data, client):
+    def setLetsGoCHandle(self, cHandle, client):
         self.LetsGo_cHandle = cHandle
-        self.imu_data = imu_data
         self.client = client
 
 def on_publish(client,userdata,result):             #create function for callback
@@ -53,12 +54,12 @@ addr = args.addr.lower()
 if len(addr) != 17:
     raise ValueError("Invalid address supplied")
 
+# C0:98:E5:49:00:00
 broker = "54.90.30.207"
 port = 1883
 
-
-DISPLAY_SERVICE_UUID = "32e61089-2b22-4db5-a914-43ce41986c70"
-DISPLAY_CHAR_UUID    = "32e6108a-2b22-4db5-a914-43ce41986c70"
+LETSGO_SERVICE_UUID = "32e61089-2b22-4db5-a914-43ce41986c70"
+LETSGO_Gesture_UUID = "32e6108a-2b22-4db5-a914-43ce41986c70"
 
 try:
     client1= paho.Client("control1")                           #create client object
@@ -77,15 +78,15 @@ try:
         print("connected")
 
                             #establish connection
-        imu_data = IMUData()
+        # imu_data = IMUData()
 
 
         # Get service
-        sv = buckler.getServiceByUUID(DISPLAY_SERVICE_UUID)
+        sv = buckler.getServiceByUUID(LETSGO_SERVICE_UUID)
         # Get characteristic
-        ch = sv.getCharacteristics(DISPLAY_CHAR_UUID)[0]
+        ch = sv.getCharacteristics(LETSGO_Gesture_UUID)[0]
         #ch.write(bytes("testing", 'utf-8'))
-        delegate.setLetsGoCHandle(ch.getHandle(), imu_data, client1)
+        delegate.setLetsGoCHandle(ch.getHandle(), client1)
         dess = ch.getDescriptors()
         dess[0].write(bytes([0x01]))
 
@@ -97,11 +98,11 @@ try:
 
         while True:
             if buckler.waitForNotifications(10.0):
-                print("completated!")
+                print("Gesture received and published!!")
             else:
                 print("No notifications")
-                display = input("Enter a message to write to the display:\n")
-                ch.write(bytes(display, 'utf-8'))
+                #display = input("Enter a message to write to the display:\n")
+                #ch.write(bytes(display, 'utf-8'))
     # while True:
     #     # return type is "bytes"
     #     readbytes = ch.read()
