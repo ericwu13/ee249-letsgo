@@ -57,6 +57,14 @@ void read_IMU(imu_data_type* data, int length)
     lsm9ds1_measurement_t accel_val = lsm9ds1_read_accelerometer();
     lsm9ds1_measurement_t gyro_val = lsm9ds1_read_gyro();
     lsm9ds1_measurement_t magnet_val = lsm9ds1_read_magnetometer();
+    nrf_saadc_value_t adc_val0;
+    nrf_saadc_value_t adc_val1;
+    nrf_saadc_value_t adc_val2;
+    nrf_saadc_value_t adc_val3;
+    nrfx_saadc_sample_convert(0, &adc_val0);
+    nrfx_saadc_sample_convert(1, &adc_val1);
+    nrfx_saadc_sample_convert(2, &adc_val2);
+    nrfx_saadc_sample_convert(3, &adc_val3);
     data[0] = accel_val.x_axis;
     data[1] = accel_val.y_axis;
     data[2] = accel_val.z_axis;
@@ -66,11 +74,11 @@ void read_IMU(imu_data_type* data, int length)
     data[6] = magnet_val.x_axis;
     data[7] = magnet_val.y_axis;
     data[8] = magnet_val.z_axis;
-    data[9] = 0;
-    data[10] = 0;
-    data[11] = 0;
-    data[12] = 0;
     // TODO: read flex sensor
+    data[9] =  adc_val0 * 1.8 / 512;
+    data[10] = adc_val1 * 1.8 / 512;
+    data[11] = adc_val2 * 1.8 / 512;
+    data[12] = adc_val3 * 1.8 / 512;
     return;
 }
 
