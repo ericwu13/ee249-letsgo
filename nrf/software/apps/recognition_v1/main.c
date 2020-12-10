@@ -39,6 +39,7 @@
 #include "lsm9ds1.h"
 
 #include "lib_gesture_flash.h"
+#define EXTERNAL_IMU
 
 /* Global Variables */
 typedef float imu_data_type ;//float
