@@ -318,7 +318,7 @@ const float training_data[LIBRARY_SIZE][MAX_SIGNAL_LENGTH][NUM_IMU_DATA] = {{
     {-0.20, 0.10, 1.00, -4.29, 5.91, -7.54, -0.47, 0.23, 2.29, 1.68, 1.60, 1.59, 1.66}
 },
 {
-    {175,2,3,4,5,6,7,8,9,10,11,12,13},
+    {17500,2,3,4,5,6,7,8,9,10,11,12,13},
     {1,2,3,4,5,6,7,8,9,10,11,12,13},
     {1,2,3,4,5,6,7,8,9,10,11,12,13},
     {1,2,3,4,5,6,7,8,9,10,11,12,13},
@@ -585,10 +585,20 @@ char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], i
 				      + min_of_three( match, del, insert);
 	        }
 		}
-		float score = scoreMatrix[MAX_SIGNAL_LENGTH-1][counter-1];
-		printf("DTW for library %d: Score = %f\n", i, score);
+        //check for intermediate result
+        float score = DTW_INF;
+        int idx = 10;
+        for(idx; idx < MAX_SIGNAL_LENGTH; idx++){
+            if(score > scoreMatrix[idx][counter-1]){
+                score = scoreMatrix[idx][counter-1];
+            }
+        }
+		printf("DTW for library %d: Score = %f, idx = %d\n", i, score, idx);
 		if(score < thresholds[i])
 		{
+            char str[64];
+            sprintf(str, "Score: %4.2f", score);
+            display_write(str, DISPLAY_LINE_1);
 			return gestures[i];
 		}
 	}

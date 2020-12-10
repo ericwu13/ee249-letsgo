@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include "nrf_delay.h"
+#include "display.h"
 //#include "fds.h"
 
 #define DTW_INF FLT_MAX 

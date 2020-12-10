@@ -39,7 +39,7 @@
 #include "lsm9ds1.h"
 
 #include "lib_gesture_flash.h"
-#define EXTERNAL_IMU
+//#define EXTERNAL_IMU
 
 /* Global Variables */
 typedef float imu_data_type ;//float
@@ -129,7 +129,7 @@ void saadc_init(void) {
 void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
     switch (event_type) {
         case NRF_TIMER_EVENT_COMPARE0:
-            if(counter < 20) {
+            if(counter < MAX_SIGNAL_LENGTH) {
                 read_IMU(signal_ptr[counter], NUM_IMU_DATA);
                 counter ++;
                 // getAccelIntSrc();
@@ -171,11 +171,11 @@ void interrupt_init(uint8_t pin) {
 void GPIOTE_IRQHandler(void) {
     //NRF_GPIOTE->INTENCLR |= (uint32_t) 1;
     NRF_GPIOTE->EVENTS_IN[0] = 0;
-    if(!moved) {
+    if(!moved && counter == 0) {
         printf("Motion Detected\n");
         moved = true;
-        counter = 0;
-        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 50);
+        //counter = 0;
+        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 25);
         nrf_drv_timer_extended_compare(
             &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
         nrf_drv_timer_enable(&timeout_timer);
@@ -257,7 +257,7 @@ int main(void) {
     interrupt_init(28);
     nrf_gpio_cfg_input(28, NRF_GPIO_PIN_PULLUP);
     #endif
-    printf("GPIO Interrupt Init");
+    printf("GPIO Interrupt Init\n");
 
     
 
@@ -297,21 +297,23 @@ int main(void) {
        sizeof(char), (uint8_t*)&(gesture_ble),
        &letsgo_service, &letsgo_accel_char
     );
-
     simple_ble_adv_only_name();
 
-  
+
     float scoreMatrix[MAX_SIGNAL_LENGTH][MAX_SIGNAL_LENGTH];
     float signal[MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
     signal_ptr = signal;
     int timers = 0;
     char gesture_dtw_result = 'N';
     while(1) {
-        getAccelIntSrc();
 
+        printf("Waiting for movement.....\n");
+        // idle and collect data
         while(gesture_dtw_result == 'N'){
+            while(counter != MAX_SIGNAL_LENGTH){ getAccelIntSrc(); nrf_delay_ms(20); display_write("Waiting..", DISPLAY_LINE_0);}// wait for full data;
+            //while(gesture_dtw_result == 'N'){
+            // dtw
             int dtw_counter = counter;
-            getAccelIntSrc();
             gesture_dtw_result = dtw(scoreMatrix, signal, dtw_counter);
             if(gesture_dtw_result == 'N'){
                 display_write("No Action!", DISPLAY_LINE_0);
@@ -319,15 +321,31 @@ int main(void) {
             if(dtw_counter == MAX_SIGNAL_LENGTH){
                 counter = 0;
             }
-            nrf_delay_ms(20);
         }
         printf("Gesture detected! Result: %c\n", gesture_dtw_result);
+        switch(gesture_dtw_result){
+            case 'S':
+                display_write("Stop", DISPLAY_LINE_0); break;
+            case 'F':
+                display_write("Forward", DISPLAY_LINE_0); break;
+            case 'B':
+                display_write("Backward", DISPLAY_LINE_0); break;
+            case 'R':
+                display_write("Right", DISPLAY_LINE_0); break;
+            case 'L':
+                display_write("Left", DISPLAY_LINE_0); break;
+            case 'G':
+                display_write("Grip", DISPLAY_LINE_0); break; 
+            default:
+                display_write("Error", DISPLAY_LINE_0); break;                
+        }
+        
 
         gesture_ble = gesture_dtw_result;
         gesture_dtw_result = 'N';
 
         error_code = simple_ble_notify_char(&letsgo_accel_char);
         APP_ERROR_CHECK(error_code);
-        nrf_delay_ms(10);
+        nrf_delay_ms(1000);
     }
 }
