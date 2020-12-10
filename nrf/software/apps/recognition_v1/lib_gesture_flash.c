@@ -552,7 +552,7 @@ float euclidean_score_dtw(const float* dp1, const float* dp2, int dim){
 }
 
 char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], int counter){
-    printf("DTW start! counter = %d\n", counter);
+    // printf("DTW start! counter = %d\n", counter);
     if(counter == 0) return 'N';
 
 	for(int i = 0; i < LIBRARY_SIZE; i++){
