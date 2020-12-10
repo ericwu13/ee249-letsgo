@@ -246,6 +246,7 @@ int main(void) {
     printf("start recording\n");
 
     while(1) {
+        getAccelIntSrc();
         nrf_delay_ms(10);
         // printf("123\n");
         // uint8_t a = getAccelIntSrc();
