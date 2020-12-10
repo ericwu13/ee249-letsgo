@@ -33,7 +33,8 @@ class LetsGoDelegate(DefaultDelegate):
             gesture_char = struct.unpack('c', data)[0]
             send_str = str(gesture_char, 'utf-8')
             print("Receive command: ", send_str)
-            self.client.publish("command_1",send_str) 
+            ret = self.client.publish("command_1",send_str) 
+            #print(ret.rc)
         # ... process 'data'
 
 

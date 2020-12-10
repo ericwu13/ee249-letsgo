@@ -9,6 +9,7 @@ import time
 
 ch = 0
 addr = "C0:98:E5:49:00:00"
+SEND_COMMAND_DEBUG = True
 
 def on_publish(client,userdata,result):             #create function for callback
     print("data published \n")
@@ -17,8 +18,12 @@ def on_publish(client,userdata,result):             #create function for callbac
 def on_message(client, userdata, msg):  # The callback for when a PUBLISH message is received from the server.
     print("Message received-> " + msg.topic + " " + str(msg.payload))  # Print a received msg
     # send the message via BLE to romi
-    print("Forwarding the command to romi.....")
-    client.ch.write(bytes(msg.payload))
+    if not SEND_COMMAND_DEBUG:
+        print("Forwarding the command to romi.....")
+        client.ch.write(bytes(msg.payload))
+    else:
+        print("In debugging mode, no forwarding")
+
 
 
 def on_connect(client, userdata, flags, rc):  # The callback for when the client connects to the broker
@@ -42,16 +47,17 @@ DISPLAY_SERVICE_UUID = "32e61089-2b22-4db5-a914-43ce41986c70"
 DISPLAY_CHAR_UUID    = "32e6108a-2b22-4db5-a914-43ce41986c70"
 
 try:
-    print("connecting")
-    buckler = Peripheral(addr)
-    print("connected")
-    # Get service
-    sv = buckler.getServiceByUUID(DISPLAY_SERVICE_UUID)
-    # Get characteristic
-    ch = sv.getCharacteristics(DISPLAY_CHAR_UUID)[0]
+    if not SEND_COMMAND_DEBUG:
+        print("connecting")
+        buckler = Peripheral(addr)
+        print("connected")
+        # Get service
+        sv = buckler.getServiceByUUID(DISPLAY_SERVICE_UUID)
+        # Get characteristic
+        ch = sv.getCharacteristics(DISPLAY_CHAR_UUID)[0]
 
 
-
+    print("Activated")
     client1= paho.Client("digi_mqtt_test")                           #create client object
     client1.on_connect = on_connect  # Define callback function for successful connection
     client1.on_message = on_message  # Define callback function for receipt of a message
