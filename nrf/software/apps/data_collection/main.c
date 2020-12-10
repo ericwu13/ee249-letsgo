@@ -82,6 +82,19 @@ void read_IMU(float* data, int length)
     data[12] = adc_val3 * 1.8 / 512;
     return;
 }
+
+void print_IMU(float* data, int length)
+{
+    //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
+    for(int i = 0; i < 12; ++i) {
+      printf("%4.2f ", data[i]);
+    }
+    printf("%4.2f\n", data[12]);
+    // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
+    // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
+    // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
+}
+
 void log_init(void)
 {
     APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
@@ -173,17 +186,7 @@ void GPIOTE_IRQHandler(void) {
 }
 
 
-void print_IMU(float* data, int length)
-{
-    //printf("Accel: (%4.2f, %4.2f, %4.2f)\n", data[0], data[1], data[2]);
-    for(int i = 0; i < 12; ++i) {
-      printf("%4.2f ", data[i]);
-    }
-    printf("%4.2f\n", data[12]);
-    // printf("Gyro: (%4.2f, %4.2f, %4.2f)\n", data[3], data[4], data[5]);
-    // printf("Maget: (%4.2f, %4.2f, %4.2f)\n", data[6], data[7], data[8]);
-    // printf("Flex: (%4.2f, %4.2f, %4.2f, %4.2f, %4.2f)\n\n", data[9], data[10], data[11], data[12], data[13]);
-}
+
 
 
 int main(void) {
@@ -220,8 +223,14 @@ int main(void) {
     nrf_gpio_cfg_output(BUCKLER_LED0);
 
     // set 14 to be interrupt
+    #ifdef EXTERNAL_IMU
+    interrupt_init(14);
+    nrf_gpio_cfg_input(14, NRF_GPIO_PIN_PULLUP);
+    #else
     interrupt_init(28);
     nrf_gpio_cfg_input(28, NRF_GPIO_PIN_PULLUP);
+    #endif
+    
     NRF_LOG_INFO("Interrupt Init");
     saadc_init();
     NRF_LOG_INFO("ADC Interface Init");
