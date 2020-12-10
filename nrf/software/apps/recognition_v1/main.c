@@ -317,7 +317,9 @@ int main(void) {
                 display_write("No Action!", DISPLAY_LINE_0);
             }      
             if(dtw_counter == MAX_SIGNAL_LENGTH){
-            counter = 0;
+                for(int i = 0; i < MAX_SIGNAL_LENGTH; ++i)
+                    signal_ptr[i] = 0;
+                counter = 0;
             }
             nrf_delay_ms(20);
         }
