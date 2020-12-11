@@ -10,6 +10,7 @@
 #include "kobukiSensorPoll.h"
 #include "kobukiActuator.h"
 #include "kobukiUtilities.h"
+#include "grip.h"
 float angle = 0;
 int16_t rightSpeed = 0;
 int16_t leftSpeed = 0;
@@ -65,8 +66,12 @@ robot_state_t controller (robot_state_t state)
         angle = 0;
         lsm9ds1_start_gyro_integration();
         state = TURN_RIGHT;
-      } else if (cmd == 'G') {
+      } 
+      else if (cmd == 'G') {
         state = GRIP;
+      }
+      else if (cmd == 'U') {
+        state = UNGRIP;
       }
       else {
         display_write("HALT", DISPLAY_LINE_0);
@@ -236,14 +241,84 @@ robot_state_t controller (robot_state_t state)
       }
       break;
     }
-    case GRIP:
-    {
-      grip(true);
+    case GRIP: {
+      if (is_button_pressed(&sensors)) {
+        state = OFF; 
+        kobukiDriveDirect(0, 0);
+      } 
+      else if (cmd == 'F') {
+        leftSpeed = delta;
+        rightSpeed = delta;
+        state = FORWARD;
+      } 
+      else if (cmd == 'B') {
+        leftSpeed = -delta;
+        rightSpeed = -delta;
+        state = BACKWARD;
+      }
+      else if (cmd == 'L') {
+        leftSpeed = -delta;
+        rightSpeed = delta;
+        angle = 0;
+        lsm9ds1_start_gyro_integration();
+        state = TURN_LEFT;
+      }
+      else if (cmd == 'R') {
+        leftSpeed = delta;
+        rightSpeed = -delta;
+        angle = 0;
+        lsm9ds1_start_gyro_integration();
+        state = TURN_RIGHT;
+      }
+      else if (cmd == 'U') {
+        state = UNGRIP;
+      }
+      else {
+        display_write("GRIP", DISPLAY_LINE_0);
+        grip(true);
+        kobukiDriveDirect(0, 0);
+        state = GRIP;
+      }
       break;
     }
-    case UNGRIP:
-    {
-      grip(false);
+    case UNGRIP: {
+      if (is_button_pressed(&sensors)) {
+        state = OFF; 
+        kobukiDriveDirect(0, 0);
+      } 
+      else if (cmd == 'F') {
+        leftSpeed = delta;
+        rightSpeed = delta;
+        state = FORWARD;
+      } 
+      else if (cmd == 'B') {
+        leftSpeed = -delta;
+        rightSpeed = -delta;
+        state = BACKWARD;
+      }
+      else if (cmd == 'L') {
+        leftSpeed = -delta;
+        rightSpeed = delta;
+        angle = 0;
+        lsm9ds1_start_gyro_integration();
+        state = TURN_LEFT;
+      }
+      else if (cmd == 'R') {
+        leftSpeed = delta;
+        rightSpeed = -delta;
+        angle = 0;
+        lsm9ds1_start_gyro_integration();
+        state = TURN_RIGHT;
+      }
+      else if (cmd == 'G') {
+        state = GRIP;
+      }
+      else {
+        display_write("UNGRIP", DISPLAY_LINE_0);
+        grip(false);
+        kobukiDriveDirect(0, 0);
+        state = UNGRIP;
+      }
       break;
     }
 
