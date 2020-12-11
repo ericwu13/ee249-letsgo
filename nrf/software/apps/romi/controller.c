@@ -65,6 +65,8 @@ robot_state_t controller (robot_state_t state)
         angle = 0;
         lsm9ds1_start_gyro_integration();
         state = TURN_RIGHT;
+      } else if (cmd == 'G') {
+        state = GRIP;
       }
       else {
         display_write("HALT", DISPLAY_LINE_0);
@@ -232,6 +234,16 @@ robot_state_t controller (robot_state_t state)
         snprintf(buf, 16, "%f", angle);
         display_write(buf, DISPLAY_LINE_1);
       }
+      break;
+    }
+    case GRIP:
+    {
+      grip(true);
+      break;
+    }
+    case UNGRIP:
+    {
+      grip(false);
       break;
     }
 

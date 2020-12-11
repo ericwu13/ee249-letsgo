@@ -8,7 +8,9 @@ typedef enum {
   TURN_LEFT,
   TURN_RIGHT,
   BACKWARD,
-  FORWARD
+  FORWARD,
+  GRIP,
+  UNGRIP
 } robot_state_t;
 
 char cmd;

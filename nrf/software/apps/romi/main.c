@@ -36,6 +36,7 @@
 #include "kobukiSensorTypes.h"
 #include "kobukiUtilities.h"
 #include "lsm9ds1.h"
+#include "grip.h"
 // Intervals for advertising and connections
 static simple_ble_config_t ble_config = {
         // c0:98:e5:49:xx:xx
@@ -125,6 +126,8 @@ int main(void) {
 
   simple_ble_add_service(&letsgo_service);
 
+  // Setup PWM
+  pwm_init();
   /*
   initialization of IMU & flexsensors
   initialization of the communication to the IMU & flexsors.
