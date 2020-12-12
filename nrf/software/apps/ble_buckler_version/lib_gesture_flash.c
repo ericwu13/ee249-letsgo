@@ -564,6 +564,8 @@ static inline float min_of_three(float a, float b, float c){
 float euclidean_score_dtw(const float* dp1, const float* dp2, int dim){
 	float score = 0;
 	for(int i = 0; i < dim; i++){
+        if(i <=5 && i >= 3)
+            continue;
 		float diff = dp1[i] - dp2[i];
 		score += diff*diff;
 	}

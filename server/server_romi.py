@@ -58,7 +58,7 @@ try:
 
 
     print("Activated")
-    client1= paho.Client("digi_mqtt_test")                           #create client object
+    client1= paho.Client("digi_abc")                           #create client object
     client1.on_connect = on_connect  # Define callback function for successful connection
     client1.on_message = on_message  # Define callback function for receipt of a message
     client1.connect(broker,port)                                 #establish connection

@@ -69,9 +69,9 @@ void read_IMU(imu_data_type* data, int length)
     data[0] = accel_val.x_axis;
     data[1] = accel_val.y_axis;
     data[2] = accel_val.z_axis;
-    data[3] = gyro_val.x_axis;
-    data[4] = gyro_val.y_axis;
-    data[5] = gyro_val.z_axis;
+    data[3] = 0;//gyro_val.x_axis;
+    data[4] = 0;//gyro_val.y_axis;
+    data[5] = 0;//gyro_val.z_axis;
     data[6] = magnet_val.x_axis;
     data[7] = magnet_val.y_axis;
     data[8] = magnet_val.z_axis;

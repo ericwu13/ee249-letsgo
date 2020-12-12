@@ -157,9 +157,9 @@ int main(void) {
   char gesture_dtw_result = 'N';
   while(1) {
     while(gesture_dtw_result == 'N'){
-      read_IMU(signal[counter], NUM_IMU_DATA);
+      while(counter != MAX_SIGNAL_LENGTH){nrf_delay_ms(25); read_IMU(signal[counter++], NUM_IMU_DATA); }
+      
       //print_IMU(signal[counter], NUM_IMU_DATA);
-      counter++;
       virtual_timer_reset();
       gesture_dtw_result = dtw(scoreMatrix, signal_ptr, counter);
       if(gesture_dtw_result == 'N'){
@@ -170,7 +170,7 @@ int main(void) {
       }
       uint32_t time = read_timer();
       printf("Elapsed %ld\n", time);
-      nrf_delay_ms(1000);
+      nrf_delay_ms(5000);
     }
     printf("Gesture detected! Result: %c\n", gesture_dtw_result);
 
