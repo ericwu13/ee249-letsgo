@@ -39,7 +39,7 @@
 #include "lsm9ds1.h"
 
 #include "lib_gesture_flash.h"
-//#define EXTERNAL_IMU
+#define EXTERNAL_IMU
 
 /* Global Variables */
 typedef float imu_data_type ;//float
@@ -175,7 +175,7 @@ void GPIOTE_IRQHandler(void) {
         printf("Motion Detected\n");
         moved = true;
         //counter = 0;
-        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 25);
+        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 50);
         nrf_drv_timer_extended_compare(
             &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
         nrf_drv_timer_enable(&timeout_timer);
@@ -310,7 +310,7 @@ int main(void) {
         printf("Waiting for movement.....\n");
         // idle and collect data
         while(gesture_dtw_result == 'N'){
-            while(counter != MAX_SIGNAL_LENGTH){ getAccelIntSrc(); nrf_delay_ms(20); display_write("Waiting..", DISPLAY_LINE_0);}// wait for full data;
+            while(counter != MAX_SIGNAL_LENGTH){ getAccelIntSrc(); nrf_delay_ms(30); display_write("Waiting..", DISPLAY_LINE_0);}// wait for full data;
             //while(gesture_dtw_result == 'N'){
             // dtw
             int dtw_counter = counter;

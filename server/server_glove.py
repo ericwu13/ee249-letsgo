@@ -7,7 +7,7 @@ import struct
 import paho.mqtt.client as paho
 import time
 
-SEND_COMMAND_DEBUG = True
+SEND_COMMAND_DEBUG = False 
 
 # class IMUData():
 #     def __init__(self):
