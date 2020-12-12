@@ -64,7 +64,7 @@ simple_ble_app_t* simple_ble_app;
 
 void ble_evt_write(ble_evt_t const* p_ble_evt) {
     if (simple_ble_is_char_event(p_ble_evt, &letsgo_IMU_char)) {
-      if(command != 'H' && command != 'L' && command != 'F' && command != 'B' && command != 'R')
+      if(command != 'H' && command != 'L' && command != 'F' && command != 'B' && command != 'R' && command != 'U' && command != 'G')
       {
         printf("Unknown command: %x\n", command);
       }
@@ -117,6 +117,10 @@ int main(void) {
   APP_ERROR_CHECK(error_code);
   lsm9ds1_init(&twi_mngr_instance);
   printf("IMU initialized!\n");
+   // Setup PWM
+  pwm_init();
+  // grip(true);
+  printf("PWM Init\n");
 
   // Setup LED GPIO
   nrf_gpio_cfg_output(BUCKLER_LED0);
@@ -126,8 +130,7 @@ int main(void) {
 
   simple_ble_add_service(&letsgo_service);
 
-  // Setup PWM
-  pwm_init();
+ 
   /*
   initialization of IMU & flexsensors
   initialization of the communication to the IMU & flexsors.

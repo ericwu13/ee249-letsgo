@@ -15,6 +15,8 @@ float angle = 0;
 int16_t rightSpeed = 0;
 int16_t leftSpeed = 0;
 const int16_t delta = 50;
+const int16_t delta_l = 50;
+const int16_t delta_r = 60;
 
 KobukiSensors_t sensors = {0};
 robot_state_t controller (robot_state_t state)
@@ -44,13 +46,13 @@ robot_state_t controller (robot_state_t state)
         kobukiDriveDirect(0, 0);
       }
       else if (cmd == 'F') {
-        leftSpeed = delta;
-        rightSpeed = delta;
+        leftSpeed = delta_l;
+        rightSpeed = delta_r;
         state = FORWARD;
       }
       else if (cmd == 'B') {
-        leftSpeed = -delta;
-        rightSpeed = -delta;
+        leftSpeed = -delta_l;
+        rightSpeed = -delta_r;
         state = BACKWARD;
       }
       else if (cmd == 'L') {
@@ -91,8 +93,8 @@ robot_state_t controller (robot_state_t state)
         state = HALT;
       }
       else if (cmd == 'B') {
-        leftSpeed = -delta;
-        rightSpeed = -delta;
+        leftSpeed = -delta_l;
+        rightSpeed = -delta_r;
         state = BACKWARD;
       }
       else if (cmd == 'L') {
@@ -129,8 +131,8 @@ robot_state_t controller (robot_state_t state)
         state = HALT;
       }
       else if (cmd == 'F') {
-        leftSpeed = delta;
-        rightSpeed = delta;
+        leftSpeed = delta_l;
+        rightSpeed = delta_r;
         state = FORWARD;
       }
       else if (cmd == 'L') {
@@ -175,16 +177,16 @@ robot_state_t controller (robot_state_t state)
         state = FORWARD;
         lsm9ds1_stop_gyro_integration();
         angle = 0;
-        leftSpeed = delta;
-        rightSpeed = delta;
+        leftSpeed = delta_l;
+        rightSpeed = delta_r;
 
       }
       else if (cmd == 'B') {
         state = BACKWARD;
         lsm9ds1_stop_gyro_integration();
         angle = 0;
-        leftSpeed = -delta;
-        rightSpeed = -delta;
+        leftSpeed = -delta_l;
+        rightSpeed = -delta_r;
       }
       else 
       {
@@ -218,15 +220,15 @@ robot_state_t controller (robot_state_t state)
         state = FORWARD;
         lsm9ds1_stop_gyro_integration();
         angle = 0;
-        leftSpeed = delta;
-        rightSpeed = delta;
+        leftSpeed = delta_l;
+        rightSpeed = delta_r;
       }
       else if (cmd == 'B') {
         state = BACKWARD;
         lsm9ds1_stop_gyro_integration();
         angle = 0;
-        leftSpeed = -delta;
-        rightSpeed = -delta;
+        leftSpeed = -delta_l;
+        rightSpeed = -delta_r;
       }
       else 
       {
@@ -247,13 +249,13 @@ robot_state_t controller (robot_state_t state)
         kobukiDriveDirect(0, 0);
       } 
       else if (cmd == 'F') {
-        leftSpeed = delta;
-        rightSpeed = delta;
+        leftSpeed = delta_l;
+        rightSpeed = delta_r;
         state = FORWARD;
       } 
       else if (cmd == 'B') {
-        leftSpeed = -delta;
-        rightSpeed = -delta;
+        leftSpeed = -delta_l;
+        rightSpeed = -delta_r;
         state = BACKWARD;
       }
       else if (cmd == 'L') {
@@ -287,13 +289,13 @@ robot_state_t controller (robot_state_t state)
         kobukiDriveDirect(0, 0);
       } 
       else if (cmd == 'F') {
-        leftSpeed = delta;
-        rightSpeed = delta;
+        leftSpeed = delta_l;
+        rightSpeed = delta_r;
         state = FORWARD;
       } 
       else if (cmd == 'B') {
-        leftSpeed = -delta;
-        rightSpeed = -delta;
+        leftSpeed = -delta_l;
+        rightSpeed = -delta_r;
         state = BACKWARD;
       }
       else if (cmd == 'L') {

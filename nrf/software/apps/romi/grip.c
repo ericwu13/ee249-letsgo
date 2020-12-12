@@ -6,7 +6,7 @@
 #include "bsp.h"
 #include "nrf_drv_clock.h"
 #include "nrf_delay.h"
-#define OUTPUT_PIN 24
+#define OUTPUT_PIN BUCKLER_LED1
 nrf_drv_pwm_t m_pwm0 = NRF_DRV_PWM_INSTANCE(0);
 nrf_pwm_values_individual_t seq_values[] = {0, 0, 0, 0};
 nrf_pwm_sequence_t const seq =
