@@ -16,7 +16,7 @@ int16_t rightSpeed = 0;
 int16_t leftSpeed = 0;
 const int16_t delta = 50;
 const int16_t delta_l = 50;
-const int16_t delta_r = 60;
+const int16_t delta_r = 50;
 
 KobukiSensors_t sensors = {0};
 robot_state_t controller (robot_state_t state)
