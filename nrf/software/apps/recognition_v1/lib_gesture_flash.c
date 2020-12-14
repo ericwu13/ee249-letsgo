@@ -5,8 +5,8 @@ const float thresholds[LIBRARY_SIZE] = {25,25,25, //F
 										25,25,25, //H
                                         25,25,30, //R
 										25,25,25, //L
-                                        25,25,25, //G
-										25,25,25, //U
+                                        20,20,20, //G
+										15,15,15, //U
                                         25,25,25};
 
 const char  gestures  [LIBRARY_SIZE] = "FFFBBBHHHRRRLLLGGGUUUSSS";
