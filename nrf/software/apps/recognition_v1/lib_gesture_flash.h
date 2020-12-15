@@ -15,7 +15,7 @@
 
 #define NUM_IMU_DATA 13
 #define MAX_SIGNAL_LENGTH 3
-#define LIBRARY_SIZE 3
+#define LIBRARY_SIZE 6
 
 extern const float test_array[LIBRARY_SIZE][MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
 extern const float thresholds[LIBRARY_SIZE];
