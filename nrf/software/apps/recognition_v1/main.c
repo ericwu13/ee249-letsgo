@@ -318,9 +318,7 @@ int main(void) {
             if(gesture_dtw_result == 'N'){
                 display_write("No Action!", DISPLAY_LINE_0);
             }      
-            if(dtw_counter == MAX_SIGNAL_LENGTH){
-                counter = 0;
-            }
+            counter = 0;
         }
         printf("Gesture detected! Result: %c\n", gesture_dtw_result);
         switch(gesture_dtw_result){
