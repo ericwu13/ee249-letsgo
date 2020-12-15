@@ -73,7 +73,7 @@ char dtw(float scoreMatrix[][MAX_SIGNAL_LENGTH], float signal[][NUM_IMU_DATA], i
 		}
         //check for intermediate result
         float score = DTW_INF;
-        int idx = 10;
+        int idx = 0;
         for(idx; idx < MAX_SIGNAL_LENGTH; idx++){
             if(score > scoreMatrix[idx][counter-1]){
                 score = scoreMatrix[idx][counter-1];
