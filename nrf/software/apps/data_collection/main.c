@@ -41,7 +41,7 @@
 #include "app_util_platform.h"
 
 #define NUM_IMU_DATA 13
-#define MAX_SIGNAL_LENGTH 3
+#define MAX_SIGNAL_LENGTH 5
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 static int counter = 0;
