@@ -41,6 +41,7 @@
 #include "app_util_platform.h"
 
 #define NUM_IMU_DATA 13
+#define MAX_SIGNAL_LENGTH 3
 static float IMU_data[NUM_IMU_DATA];
 static bool volatile moved = false;
 static int counter = 0;
@@ -127,7 +128,7 @@ void saadc_init(void) {
 void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
     switch (event_type) {
         case NRF_TIMER_EVENT_COMPARE0:
-            if(counter < 20) {
+            if(counter < MAX_SIGNAL_LENGTH) {
                 counter ++;
                 read_IMU(IMU_data, NUM_IMU_DATA);
                 print_IMU(IMU_data, 13);
@@ -177,7 +178,7 @@ void GPIOTE_IRQHandler(void) {
         printf("Motion Detected\n");
         moved = true;
         counter = 0;
-        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 50);
+        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000.0/MAX_SIGNAL_LENGTH);
         nrf_drv_timer_extended_compare(
             &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
         nrf_drv_timer_enable(&timeout_timer);

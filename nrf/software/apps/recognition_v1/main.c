@@ -175,7 +175,7 @@ void GPIOTE_IRQHandler(void) {
         printf("Motion Detected\n");
         moved = true;
         //counter = 0;
-        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 50);
+        uint32_t time_ticks = nrf_drv_timer_ms_to_ticks(&timeout_timer, 1000.0 / MAX_SIGNAL_LENGTH);
         nrf_drv_timer_extended_compare(
             &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
         nrf_drv_timer_enable(&timeout_timer);
