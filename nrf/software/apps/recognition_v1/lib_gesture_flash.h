@@ -14,7 +14,7 @@
 #define DTW_INF FLT_MAX 
 
 #define NUM_IMU_DATA 13
-#define MAX_SIGNAL_LENGTH 5
+#define MAX_SIGNAL_LENGTH 10
 #define LIBRARY_SIZE 6
 
 extern const float test_array[LIBRARY_SIZE][MAX_SIGNAL_LENGTH][NUM_IMU_DATA];
