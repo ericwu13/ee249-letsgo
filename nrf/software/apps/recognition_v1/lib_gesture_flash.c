@@ -1,7 +1,7 @@
 #include "lib_gesture_flash.h"
 
 const float thresholds[LIBRARY_SIZE] = {25,25,25, //F
-                                        25,25,25 //B
+                                        25,25,25, //B
 										25,25,25, //H
                                         25,25,30, //R
 										25,25,25, //L
