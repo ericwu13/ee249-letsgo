@@ -139,12 +139,13 @@ void timeout_IRQ(nrf_timer_event_t event_type, void* p_context) {
                 // nrf_drv_timer_clear(&timeout_timer);
                 // nrf_drv_timer_compare(
                 //     &timeout_timer, NRF_TIMER_CC_CHANNEL0, time_ticks, true);
-                
-            } else {
-                moved = false;
-                printf("time out!\n");
-                printf("Length of Data: %d\n", counter);
-                nrf_drv_timer_disable(&timeout_timer);
+                if(counter == MAX_SIGNAL_LENGTH) {
+                    moved = false;
+                    printf("time out!\n");
+                    printf("Length of Data: %d\n", counter);
+                    nrf_drv_timer_disable(&timeout_timer);
+                }
+        
             }
             
             break;
