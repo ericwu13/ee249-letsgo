@@ -9,7 +9,7 @@ const float thresholds[LIBRARY_SIZE] = {25,25,25, //F
 										15,15,15, //U
                                         25,25,25};
 
-const char  gestures  [LIBRARY_SIZE] = "ALAAALAHHRRRAALGGGUUUSSS";
+const char  gestures  [LIBRARY_SIZE] = "AAAAALAHHRRRAAAGGGUUUSSS";
 
 
 const float training_data[LIBRARY_SIZE][MAX_SIGNAL_LENGTH][NUM_IMU_DATA] = {{
